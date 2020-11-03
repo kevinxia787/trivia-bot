@@ -41,6 +41,28 @@ food_drink_600 = trivia_bot_db.food_drink_600
 food_drink_800 = trivia_bot_db.food_drink_800
 food_drink_1000 = trivia_bot_db.food_drink_1000
 
+
+# random question from 200 by category
+def random_question_200(category):
+  if category == "Science":
+    random_selection = science_200.aggregate([{"$sample": {"size": 1}}]).next()
+
+# random question from 400 by category
+def random_question_400(category):
+  pass
+
+# random question from 600 by category
+def random_question_600(category):
+  pass
+
+# random question from 800 by category
+def random_question_800(category):
+  pass
+
+# random question from 1000 by category
+def random_question_1000(category):
+  pass
+
 # already done, use it as a reference
 def insert_science_questions(question):
   value = question['value']
@@ -173,3 +195,5 @@ def insert_food_drink_questions(question):
     print("Error occured.")
 
   return
+
+random_question_200("Science")
