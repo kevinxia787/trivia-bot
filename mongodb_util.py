@@ -5,6 +5,8 @@ client = MongoClient()
 
 trivia_bot_db = client.trivia_bot_db
 
+current_game = trivia_bot_db.current_game
+
 science_200 = trivia_bot_db.science_200
 science_400 = trivia_bot_db.science_400
 science_600 = trivia_bot_db.science_600
@@ -41,27 +43,117 @@ food_drink_600 = trivia_bot_db.food_drink_600
 food_drink_800 = trivia_bot_db.food_drink_800
 food_drink_1000 = trivia_bot_db.food_drink_1000
 
-
 # random question from 200 by category
 def random_question_200(category):
   if category == "Science":
-    random_selection = science_200.aggregate([{"$sample": {"size": 1}}]).next()
+    return science_200.aggregate([{"$sample": {"size": 1}}]).next()
+  elif category == "Movies & TV":
+    return movies_tv_200.aggregate([{"$sample": {"size": 1}}]).next()
+  elif category == "Pop Culture":
+    return pop_culture_200.aggregate([{"$sample": {"size": 1}}]).next()
+  elif category == "History":
+    return history_200.aggregate([{"$sample": {"size": 1}}]).next()
+  elif category == "Music":
+    return music_200.aggregate([{"$sample": {"size": 1}}]).next()
+  elif category == "Food & Drink":
+    return food_drink_200.aggregate([{"$sample": {"size": 1}}]).next()
+  else:
+    return "Incorrect category. No questions!"
 
-# random question from 400 by category
 def random_question_400(category):
-  pass
+  if category == "Science":
+    return science_400.aggregate([{"$sample": {"size": 1}}]).next()
+  elif category == "Movies & TV":
+    return movies_tv_400.aggregate([{"$sample": {"size": 1}}]).next()
+  elif category == "Pop Culture":
+    return pop_culture_400.aggregate([{"$sample": {"size": 1}}]).next()
+  elif category == "History":
+    return history_400.aggregate([{"$sample": {"size": 1}}]).next()
+  elif category == "Music":
+    return music_400.aggregate([{"$sample": {"size": 1}}]).next()
+  elif category == "Food & Drink":
+    return food_drink_400.aggregate([{"$sample": {"size": 1}}]).next()
+  else:
+    return "Incorrect category. No questions!"
 
-# random question from 600 by category
 def random_question_600(category):
-  pass
+  if category == "Science":
+    return science_600.aggregate([{"$sample": {"size": 1}}]).next()
+  elif category == "Movies & TV":
+    return movies_tv_600.aggregate([{"$sample": {"size": 1}}]).next()
+  elif category == "Pop Culture":
+    return pop_culture_600.aggregate([{"$sample": {"size": 1}}]).next()
+  elif category == "History":
+    return history_600.aggregate([{"$sample": {"size": 1}}]).next()
+  elif category == "Music":
+    return music_600.aggregate([{"$sample": {"size": 1}}]).next()
+  elif category == "Food & Drink":
+    return food_drink_600.aggregate([{"$sample": {"size": 1}}]).next()
+  else:
+    return "Incorrect category. No questions!"
 
-# random question from 800 by category
 def random_question_800(category):
-  pass
+  if category == "Science":
+    return science_800.aggregate([{"$sample": {"size": 1}}]).next()
+  elif category == "Movies & TV":
+    return movies_tv_800.aggregate([{"$sample": {"size": 1}}]).next()
+  elif category == "Pop Culture":
+    return pop_culture_800.aggregate([{"$sample": {"size": 1}}]).next()
+  elif category == "History":
+    return history_800.aggregate([{"$sample": {"size": 1}}]).next()
+  elif category == "Music":
+    return music_800.aggregate([{"$sample": {"size": 1}}]).next()
+  elif category == "Food & Drink":
+    return food_drink_800.aggregate([{"$sample": {"size": 1}}]).next()
+  else:
+    return "Incorrect category. No questions!"
 
-# random question from 1000 by category
 def random_question_1000(category):
-  pass
+  if category == "Science":
+    return science_1000.aggregate([{"$sample": {"size": 1}}]).next()
+  elif category == "Movies & TV":
+    return movies_tv_1000.aggregate([{"$sample": {"size": 1}}]).next()
+  elif category == "Pop Culture":
+    return pop_culture_1000.aggregate([{"$sample": {"size": 1}}]).next()
+  elif category == "History":
+    return history_1000.aggregate([{"$sample": {"size": 1}}]).next()
+  elif category == "Music":
+    return music_1000.aggregate([{"$sample": {"size": 1}}]).next()
+  elif category == "Food & Drink":
+    return food_drink_1000.aggregate([{"$sample": {"size": 1}}]).next()
+  else:
+    return "Incorrect category. No questions!"
+  
+def simplify_question_object(question):
+  simple_question_object = {}
+  simple_question_object["question"] = question["question"]
+  simple_question_object["answer"] = question["answer"]
+  return simple_question_object
+
+def generate_questions_for_game():
+  categories = ["Science", "Pop Culture", "Movies & TV", "Music", "Food & Drink", "History"]
+  questions = []
+  for category in categories:
+    category_obj = {}
+    category_obj['category'] = category
+    #pull out the question + answer, you don't need the other data. 
+    category_obj['200'] = simplify_question_object(random_question_200(category))
+    category_obj['400'] = simplify_question_object(random_question_400(category))
+    category_obj['600'] = simplify_question_object(random_question_600(category))
+    category_obj['800'] = simplify_question_object(random_question_800(category))
+    category_obj['1000'] = simplify_question_object(random_question_1000(category))
+    questions.append(category_obj)
+  
+  # clear current game db
+  current_game.delete_many({})
+
+  for questions_by_category in questions:
+    current_game.insert_one(questions_by_category)
+    print("Inserted category: " + questions_by_category['category'] + " into Current Game DB. ")
+
+  return questions
+
+print(generate_questions_for_game())
 
 # already done, use it as a reference
 def insert_science_questions(question):
@@ -196,4 +288,39 @@ def insert_food_drink_questions(question):
 
   return
 
-random_question_200("Science")
+
+
+# print("Science 200: " + str(random_question_200("Science")))
+# print("Movies & TV 200: " + str(random_question_200("Movies & TV")))
+# print("Pop Culture 200: " + str(random_question_200("Pop Culture")))
+# print("History 200: " + str(random_question_200("History")))
+# print("Music 200: " + str(random_question_200("Music")))
+# print("Food & Drink 200: " + str(random_question_200("Food & Drink")))
+
+# print("Science 400: " + str(random_question_400("Science")))
+# print("Movies & TV 400: " + str(random_question_400("Movies & TV")))
+# print("Pop Culture 400: " + str(random_question_400("Pop Culture")))
+# print("History 400: " + str(random_question_400("History")))
+# print("Music 400: " + str(random_question_400("Music")))
+# print("Food & Drink 400: " + str(random_question_400("Food & Drink")))
+
+# print("Science 600: " + str(random_question_600("Science")))
+# print("Movies & TV 600: " + str(random_question_600("Movies & TV")))
+# print("Pop Culture 600: " + str(random_question_600("Pop Culture")))
+# print("History 600: " + str(random_question_600("History")))
+# print("Music 600: " + str(random_question_600("Music")))
+# print("Food & Drink 600: " + str(random_question_600("Food & Drink")))
+
+# print("Science 800: " + str(random_question_800("Science")))
+# print("Movies & TV 800: " + str(random_question_800("Movies & TV")))
+# print("Pop Culture 800: " + str(random_question_800("Pop Culture")))
+# print("History 800: " + str(random_question_800("History")))
+# print("Music 800: " + str(random_question_800("Music")))
+# print("Food & Drink 800: " + str(random_question_800("Food & Drink")))
+
+# print("Science 1000: " + str(random_question_1000("Science")))
+# print("Movies & TV 1000: " + str(random_question_1000("Movies & TV")))
+# print("Pop Culture 1000: " + str(random_question_1000("Pop Culture")))
+# print("History 1000: " + str(random_question_1000("History")))
+# print("Music 1000: " + str(random_question_1000("Music")))
+# print("Food & Drink 1000: " + str(random_question_1000("Food & Drink")))
