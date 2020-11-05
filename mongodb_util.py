@@ -154,13 +154,10 @@ def generate_questions_for_game():
 
   return questions
 
-generate_questions_for_game()
-
 def get_current_game_question(category, value):
   category_obj = current_game.find_one({"category": category})
   return category_obj[str(value)]
 
-print(get_current_game_question("Science", 200))
 
 # already done, use it as a reference
 def insert_science_questions(question):
