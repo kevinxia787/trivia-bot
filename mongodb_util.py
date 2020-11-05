@@ -45,103 +45,112 @@ food_drink_1000 = trivia_bot_db.food_drink_1000
 
 # random question from 200 by category
 def random_question_200(category):
-  if category == "Science":
+  if category == "science":
     return science_200.aggregate([{"$sample": {"size": 1}}]).next()
-  elif category == "Movies & TV":
+  elif category == "movies_tv":
     return movies_tv_200.aggregate([{"$sample": {"size": 1}}]).next()
-  elif category == "Pop Culture":
+  elif category == "pop_culture":
     return pop_culture_200.aggregate([{"$sample": {"size": 1}}]).next()
-  elif category == "History":
+  elif category == "history":
     return history_200.aggregate([{"$sample": {"size": 1}}]).next()
-  elif category == "Music":
+  elif category == "music":
     return music_200.aggregate([{"$sample": {"size": 1}}]).next()
-  elif category == "Food & Drink":
+  elif category == "food_drink":
     return food_drink_200.aggregate([{"$sample": {"size": 1}}]).next()
   else:
     return "Incorrect category. No questions!"
 
 def random_question_400(category):
-  if category == "Science":
+  if category == "science":
     return science_400.aggregate([{"$sample": {"size": 1}}]).next()
-  elif category == "Movies & TV":
+  elif category == "movies_tv":
     return movies_tv_400.aggregate([{"$sample": {"size": 1}}]).next()
-  elif category == "Pop Culture":
+  elif category == "pop_culture":
     return pop_culture_400.aggregate([{"$sample": {"size": 1}}]).next()
-  elif category == "History":
+  elif category == "history":
     return history_400.aggregate([{"$sample": {"size": 1}}]).next()
-  elif category == "Music":
+  elif category == "music":
     return music_400.aggregate([{"$sample": {"size": 1}}]).next()
-  elif category == "Food & Drink":
+  elif category == "food_drink":
     return food_drink_400.aggregate([{"$sample": {"size": 1}}]).next()
   else:
     return "Incorrect category. No questions!"
 
 def random_question_600(category):
-  if category == "Science":
+  if category == "science":
     return science_600.aggregate([{"$sample": {"size": 1}}]).next()
-  elif category == "Movies & TV":
+  elif category == "movies_tv":
     return movies_tv_600.aggregate([{"$sample": {"size": 1}}]).next()
-  elif category == "Pop Culture":
+  elif category == "pop_culture":
     return pop_culture_600.aggregate([{"$sample": {"size": 1}}]).next()
-  elif category == "History":
+  elif category == "history":
     return history_600.aggregate([{"$sample": {"size": 1}}]).next()
-  elif category == "Music":
+  elif category == "music":
     return music_600.aggregate([{"$sample": {"size": 1}}]).next()
-  elif category == "Food & Drink":
+  elif category == "food_drink":
     return food_drink_600.aggregate([{"$sample": {"size": 1}}]).next()
   else:
     return "Incorrect category. No questions!"
 
 def random_question_800(category):
-  if category == "Science":
+  if category == "science":
     return science_800.aggregate([{"$sample": {"size": 1}}]).next()
-  elif category == "Movies & TV":
+  elif category == "movies_tv":
     return movies_tv_800.aggregate([{"$sample": {"size": 1}}]).next()
-  elif category == "Pop Culture":
+  elif category == "pop_culture":
     return pop_culture_800.aggregate([{"$sample": {"size": 1}}]).next()
-  elif category == "History":
+  elif category == "history":
     return history_800.aggregate([{"$sample": {"size": 1}}]).next()
-  elif category == "Music":
+  elif category == "music":
     return music_800.aggregate([{"$sample": {"size": 1}}]).next()
-  elif category == "Food & Drink":
+  elif category == "food_drink":
     return food_drink_800.aggregate([{"$sample": {"size": 1}}]).next()
   else:
     return "Incorrect category. No questions!"
 
 def random_question_1000(category):
-  if category == "Science":
+  if category == "science":
     return science_1000.aggregate([{"$sample": {"size": 1}}]).next()
-  elif category == "Movies & TV":
+  elif category == "movies_tv":
     return movies_tv_1000.aggregate([{"$sample": {"size": 1}}]).next()
-  elif category == "Pop Culture":
+  elif category == "pop_culture":
     return pop_culture_1000.aggregate([{"$sample": {"size": 1}}]).next()
-  elif category == "History":
+  elif category == "history":
     return history_1000.aggregate([{"$sample": {"size": 1}}]).next()
-  elif category == "Music":
+  elif category == "music":
     return music_1000.aggregate([{"$sample": {"size": 1}}]).next()
-  elif category == "Food & Drink":
+  elif category == "food_drink":
     return food_drink_1000.aggregate([{"$sample": {"size": 1}}]).next()
   else:
     return "Incorrect category. No questions!"
   
 def simplify_question_object(question):
+  if (question == "Incorrect category. No questions!"):
+    return
   simple_question_object = {}
+  print(question)
   simple_question_object["question"] = question["question"]
   simple_question_object["answer"] = question["answer"]
+  
   return simple_question_object
 
 def generate_questions_for_game():
-  categories = ["Science", "Pop Culture", "Movies & TV", "Music", "Food & Drink", "History"]
+  categories = ["science", "pop_culture", "movies_tv", "music", "food_drink", "history"]
   questions = []
   for category in categories:
     category_obj = {}
     category_obj['category'] = category
+    q200 = random_question_200(category)
+    q400 = random_question_400(category)
+    q600 = random_question_600(category)
+    q800 = random_question_800(category)
+    q1000 = random_question_1000(category)
     #pull out the question + answer, you don't need the other data. 
-    category_obj['200'] = simplify_question_object(random_question_200(category))
-    category_obj['400'] = simplify_question_object(random_question_400(category))
-    category_obj['600'] = simplify_question_object(random_question_600(category))
-    category_obj['800'] = simplify_question_object(random_question_800(category))
-    category_obj['1000'] = simplify_question_object(random_question_1000(category))
+    category_obj[category + '200'] = simplify_question_object(q200)
+    category_obj[category + '400'] = simplify_question_object(q400)
+    category_obj[category + '600'] = simplify_question_object(q600)
+    category_obj[category + '800'] = simplify_question_object(q800)
+    category_obj[category + '1000'] = simplify_question_object(q1000)
     questions.append(category_obj)
   
   # clear current game db
@@ -152,6 +161,10 @@ def generate_questions_for_game():
     print("Inserted category: " + questions_by_category['category'] + " into Current Game DB. ")
 
   return questions
+
+# print(generate_questions_for_game())
+def query_selected_question(category, value):
+  return current_game.find_one({"category": category, "value": value})
 
 print(generate_questions_for_game())
 
