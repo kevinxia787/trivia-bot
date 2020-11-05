@@ -128,6 +128,7 @@ def simplify_question_object(question):
   simple_question_object = {}
   simple_question_object["question"] = question["question"]
   simple_question_object["answer"] = question["answer"]
+  simple_question_object["value"] = question["value"]
   return simple_question_object
 
 def generate_questions_for_game():
@@ -153,7 +154,13 @@ def generate_questions_for_game():
 
   return questions
 
-print(generate_questions_for_game())
+generate_questions_for_game()
+
+def get_current_game_question(category, value):
+  category_obj = current_game.find_one({"category": category})
+  return category_obj[str(value)]
+
+print(get_current_game_question("Science", 200))
 
 # already done, use it as a reference
 def insert_science_questions(question):
