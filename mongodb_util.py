@@ -136,7 +136,7 @@ def generate_questions_for_game():
   questions = []
   for category in categories:
     category_obj = {}
-    category_obj['category'] = category
+    category_obj['category'] = category.lower()
     #pull out the question + answer, you don't need the other data. 
     category_obj['200'] = simplify_question_object(random_question_200(category))
     category_obj['400'] = simplify_question_object(random_question_400(category))
