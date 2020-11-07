@@ -3,6 +3,7 @@ import os
 import discord
 import random
 import asyncio
+import time
 
 from discord.ext import commands
 from tabulate import tabulate
@@ -51,6 +52,8 @@ class Trivia(commands.Cog):
     self.answerer = None
     self.scoreboard = [[0, 0, 0, 0]]
     self.attempted_list = [False, False, False, False]
+    self.start_time = None
+    self.stop_time = None
 
   @commands.command()
   async def arise(self, ctx):
@@ -62,7 +65,9 @@ class Trivia(commands.Cog):
       await ctx.send("Game session has not been started yet...run the ```!start_game``` command to commence Trivia Night!")
       return
     print(ctx.guild.text_channels)
-    await ctx.send("After I say 'Go!', 'buzz' a message to the channel (it can be anything) to get to answer this question! \nNote: If you got the question wrong earlier you are NOT allowed to participate.")
+    self.start_time = None
+    self.stop_time = None
+    await ctx.send("After I say 'Go!', send 'buzz' to the channel to see who gets to answer the question! \nNote: If you got the question wrong earlier you are NOT allowed to participate.\nDo not begin typing until I say go.")
     await asyncio.sleep(5)
     await ctx.send("3")
     await asyncio.sleep(random.randint(1, 5))
@@ -70,7 +75,7 @@ class Trivia(commands.Cog):
     await asyncio.sleep(random.randint(1,5))
     await ctx.send("1")
     await asyncio.sleep(random.randint(1,5))
-    await ctx.send("Go!")
+    await ctx.send("Go!") # I should grab this message also
     await asyncio.sleep(5)
     answerer = None
     for channel in ctx.guild.text_channels:
@@ -80,7 +85,7 @@ class Trivia(commands.Cog):
         # get everyone's message (beemu, docquan, bombuh, parz)
         # grab the created_at time
         # print out thee created time to the channel, pick the winner. 
-        messages = await channel.history(limit=4, oldest_first=True).flatten()
+        messages = await channel.history().flatten()
         # if message appears before Go!, consider disqualifying the person that sent that message, increase limit to 10 maybe.
         # condition for the answerer is first valid message AFTER Go!
         print(messages)
@@ -91,22 +96,33 @@ class Trivia(commands.Cog):
     self.answerer = answerer
     # answerer gets to answer the question, create an answer command
     await ctx.send(f'{answerer}' + " gets to answer the question!")
+    await ctx.send("Starting 60 second timer!")
+    self.start_time = time.perf_counter()
+    await asyncio.sleep(30) # sleep for 30seconds
+    if self.stop_time == None:
+      await ctx.send("Time's up! Someone else gets a chance to steal!")
+      await ctx.invoke(self.bot.get_command("kickoff_answer_cycle"))
+    else:
+      return
 
   @commands.command()
   async def answer_question(self, ctx, answer):
+    self.stop_time = time.perf_counter()
     if not self.game_start:
       await ctx.send("Game session has not been started yet...run the ```!start_game``` command to commence Trivia Night!")
       return
     if self.current_question == None or self.answerer == None:
       await ctx.send("No question provisioned...maybe select a category first?")
       return
+    
     user = str(ctx.author).split('#')[0].lower()
     correct_answer = self.current_question["answer"].lower()
+    correct_answer_split = self.current_question["answer"].lower().split(" ")
     answer = answer.lower()
     if self.answerer != user:
       await ctx.send("Not your turn...50 pts will be deducted!!")
     else:
-      if answer in correct_answer:
+      if answer in correct_answer or answer == correct_answer or answer in correct_answer_split:
         # correct! + value to the scoreboard
         await ctx.send("Correct!\n" + f'{user}' + " is awarded " + f'{self.current_question["value"]}' + ".")
         if user == "beemu":
@@ -204,3 +220,4 @@ class Trivia(commands.Cog):
 
 def setup(bot):
     bot.add_cog(Trivia(bot))
+    
