@@ -67,7 +67,7 @@ class Trivia(commands.Cog):
     print(ctx.guild.text_channels)
     self.start_time = None
     self.stop_time = None
-    await ctx.send("After I say 'Go!', send 'buzz' to the channel to see who gets to answer the question! \nNote: If you got the question wrong earlier you are NOT allowed to participate.\nDo not begin typing until I say go.")
+    await ctx.send("After I say 'Go!', first person to send a message to the channel gets to answer the question. \nNote: If you got the question wrong earlier you are NOT allowed to participate.\nDo not begin typing until I say go.")
     await asyncio.sleep(5)
     await ctx.send("3")
     await asyncio.sleep(random.randint(1, 5))
@@ -78,6 +78,7 @@ class Trivia(commands.Cog):
     await ctx.send("Go!") # I should grab this message also
     await asyncio.sleep(5)
     answerer = None
+    messages = None
     for channel in ctx.guild.text_channels:
       if channel.name == "trivia-night":
         #TODO
@@ -85,18 +86,35 @@ class Trivia(commands.Cog):
         # get everyone's message (beemu, docquan, bombuh, parz)
         # grab the created_at time
         # print out thee created time to the channel, pick the winner. 
-        messages = await channel.history().flatten()
+        messages = await channel.history(limit=2).flatten()
         # if message appears before Go!, consider disqualifying the person that sent that message, increase limit to 10 maybe.
         # condition for the answerer is first valid message AFTER Go!
-        print(messages)
-        answerer = messages[0].author.name
-        print(answerer)
+        # print(messages)
+        # answerer = messages[0].author.name
+        # print(answerer)
         break
-    
+
+    player_messages = []
+    for message in messages:
+      obj = {}
+      name = str(message.author).split("#")[0]
+      timestamp = message.created_at.timestamp()
+      content = message.system_content
+      obj["name"] = name
+      obj["timestamp"] = timestamp
+      obj["content"] = content
+      player_messages.append(obj)
+
+    player_messages = sorted(player_messages, key = lambda msg: msg['timestamp'])
+
+    answerer = player_messages[0]["name"].lower()
     self.answerer = answerer
-    # answerer gets to answer the question, create an answer command
+    print(messages)
+    print(player_messages)
+
+    #answerer gets to answer the question, create an answer command
     await ctx.send(f'{answerer}' + " gets to answer the question!")
-    await ctx.send("Starting 60 second timer!")
+    await ctx.send("Starting 30 second timer!")
     self.start_time = time.perf_counter()
     await asyncio.sleep(30) # sleep for 30seconds
     if self.stop_time == None:
