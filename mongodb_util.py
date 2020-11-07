@@ -1,4 +1,7 @@
 import pymongo
+import re
+import unidecode
+
 from pymongo import MongoClient
 
 client = MongoClient()
@@ -123,11 +126,20 @@ def random_question_1000(category):
     return food_drink_1000.aggregate([{"$sample": {"size": 1}}]).next()
   else:
     return "Incorrect category. No questions!"
+
+def format_answer(answer):
+  answer = answer.replace("<i>", "")
+  answer = answer.replace("&", "and")
+  answer = answer.replace("</i>", "").lower().strip('"')
+  answer = unidecode.unidecode(answer)
+  # answer = re.sub('[^A-Za-z0-9\']+', ' ', answer)
+  return answer
   
 def simplify_question_object(question):
   simple_question_object = {}
   simple_question_object["question"] = question["question"]
   simple_question_object["answer"] = question["answer"]
+  print(format_answer(question["answer"]))
   simple_question_object["value"] = question["value"]
   return simple_question_object
 

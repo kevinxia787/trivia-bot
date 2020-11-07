@@ -9,10 +9,12 @@ from tabulate import tabulate
 from mongodb_util import get_current_game_question
 from mongodb_util import generate_questions_for_game
 
-def show_scoreboard():
+category_key = {"science": 0, "movies & tv": 1, "pop culture": 2, "history": 3, "music": 4, "food & drink": 5}
+value_key = {"200": 0, "400": 1, "600": 2, "800": 3, "1000": 4}
+
+def show_scoreboard(scoreboard):
   # show scoreboard
-  score_board = [[0, 0, 0, 0]]
-  return tabulate(score_board, headers=["beemu", "docquan", "bombuh", "parz"], tablefmt="fancy_grid")
+  return tabulate(scoreboard, headers=["beemu", "docquan", "bombuh", "parz"], tablefmt="fancy_grid")
 
 def random_player():
   players = ["beemu", "docquan", "bombuh", "parz"]
@@ -21,74 +23,19 @@ def random_player():
 
 def mark_question_selected(table, category, value):
   category = category.lower()
-  if category == "science":
-    if value == 200:
-      table[0][0] = "X"
-    elif value == 400:
-      table[1][0] = "X"
-    elif value == 600:
-      table[2][0] = "X"
-    elif value == 800:
-      table[3][0] = "X"
-    elif value == 1000:
-      table[4][0] = "X"
-  elif category == "movies & tv":
-    if value == 200:
-      table[0][1] = "X"
-    elif value == 400:
-      table[1][1] = "X"
-    elif value == 600:
-      table[2][1] = "X"
-    elif value == 800:
-      table[3][1] = "X"
-    elif value == 1000:
-      table[4][1] = "X"
-  elif category == "pop culture":
-    if value == 200:
-      table[0][2] = "X"
-    elif value == 400:
-      table[1][2] = "X"
-    elif value == 600:
-      table[2][2] = "X"
-    elif value == 800:
-      table[3][2] = "X"
-    elif value == 1000:
-      table[4][2] = "X"
-  elif category == "history":
-    if value == 200:
-      table[0][3] = "X"
-    elif value == 400:
-      table[1][3] = "X"
-    elif value == 600:
-      table[2][3] = "X"
-    elif value == 800:
-      table[3][3] = "X"
-    elif value == 1000:
-      table[4][3] = "X"
-  elif category == "music":
-    if value == 200:
-      table[0][4] = "X"
-    elif value == 400:
-      table[1][4] = "X"
-    elif value == 600:
-      table[2][4] = "X"
-    elif value == 800:
-      table[3][4] = "X"
-    elif value == 1000:
-      table[4][4] = "X"
-  elif category == "food & drink":
-    if value == 200:
-      table[0][5] = "X"
-    elif value == 400:
-      table[1][5] = "X"
-    elif value == 600:
-      table[2][5] = "X"
-    elif value == 800:
-      table[3][5] = "X"
-    elif value == 1000:
-      table[4][5] = "X"
-  
+  c_key = category_key[category]
+  v_key = value_key[str(value)]
+  table[v_key][c_key] = "---"
   return table
+
+def question_already_selected(table, category, value):
+  category = category.lower()
+  c_key = category_key[category]
+  v_key = value_key[str(value)]
+  if table[v_key][c_key] == "---":
+    return True
+  else:
+    return False
 
 def check_question_grid():
   pass
@@ -102,16 +49,18 @@ class Trivia(commands.Cog):
     self.table = [[200, 200, 200, 200, 200, 200],[400, 400, 400, 400, 400, 400],[600, 600, 600, 600, 600, 600],[800, 800, 800, 800, 800, 800],[1000, 1000, 1000, 1000, 1000, 1000]]
     self.current_question = None
     self.answerer = None
+    self.scoreboard = [[0, 0, 0, 0]]
+    self.attempted_list = [False, False, False, False]
 
   @commands.command()
   async def arise(self, ctx):
     await ctx.send("I have arisen.") # set tts flag to true --> ctx.send("message", tts=True)
 
   @commands.command()
-  async def answer_question(self, ctx):
+  async def kickoff_answer_cycle(self, ctx):
     print(ctx.guild.text_channels)
-    await ctx.send("After I say 'Go!', 'buzz' a message to the channel (it can be anything) to get to answer this question! \n Note: If you got the question wrong earlier you are NOT allowed to participate.")
-    await asyncio.sleep(10)
+    await ctx.send("After I say 'Go!', 'buzz' a message to the channel (it can be anything) to get to answer this question! \nNote: If you got the question wrong earlier you are NOT allowed to participate.")
+    await asyncio.sleep(5)
     await ctx.send("3")
     await asyncio.sleep(random.randint(1, 5))
     await ctx.send("2")
@@ -132,21 +81,90 @@ class Trivia(commands.Cog):
     
     self.answerer = answerer
     # answerer gets to answer the question, create an answer command
-  
+    await ctx.send(f'{answerer}' + " gets to answer the question!")
+
+  @commands.command()
+  async def answer_question(self, ctx, answer):
+    user = str(ctx.author).split('#')[0].lower()
+    correct_answer = self.current_question["answer"].lower()
+    answer = answer.lower()
+    if self.answerer != user:
+      await ctx.send("Not your turn...50 pts will be deducted!!")
+    else:
+      if answer in correct_answer:
+        # correct! + value to the scoreboard
+        await ctx.send("Correct!\n" + f'{user}' + " is awarded " + f'{self.current_question["value"]}' + ".")
+        if user == "beemu":
+          self.scoreboard[0][0] += self.current_question["value"]
+        elif user == "docquan":
+          self.scoreboard[0][1] += self.current_question["value"]
+        elif user == "bombuh":
+          self.scoreboard[0][2] += self.current_question["value"]
+        elif user == "parz":
+          self.scoreboard[0][3] += self.current_question["value"]
+        
+        # Show updated scoreboard
+        await ctx.send("```Scoreboard: \n" + f'{show_scoreboard(self.scoreboard)}' + "```")
+
+        # Show updated table
+        await ctx.send("```Question Table: \n" + f'{tabulate(self.table, headers=self.headers, tablefmt="fancy_grid")}' + "```")
+
+        # Set user as the next selector
+        self.question_selector = user
+        await ctx.send("It is " + f'{self.question_selector}' + "\'s turn to select a category!")
+
+        # clear answer, question
+        self.answerer = None
+        self.question = None
+
+        return
+      else: 
+        # incorrect! restart the kickoff question process
+        await ctx.send("Womp womp! Incorrect!\nRest of the players (who have not attempted to answer the question) can steal.")
+        # mark user as attempted in the attempted list
+        if user == "beemu":
+          self.attempted_list[0] = True
+        elif user == "docquan":
+          self.attempted_list[1] = True
+        elif user == "bombuh":
+          self.attempted_list[2] = True
+        elif user == "parz":
+          self.attempted_list[3] = True
+        
+        every_player_attempted = all(player == True for player in self.attempted_list)
+        if every_player_attempted:
+          # do not go back to the kick off answer cycle, end the current cycle
+          await ctx.send("Looks like that question stumped everyone! The correct answeer is " + f'{self.current_question["answer"]}')
+
+          # Show updated table
+          await ctx.send("```Question Table: \n" + f'{tabulate(self.table, headers=self.headers, tablefmt="fancy_grid")}' + "```")
+
+          self.question_selector = random_player()
+          await ctx.send("It is " + f'{self.question_selector}' + "\'s turn to select a category!")
+
+          # clear answer, question
+          self.answerer = None
+          self.question = None
+        else:
+          await ctx.invoke(self.bot.get_commmand("kickoff_answer_cycle"))
 
   @commands.command()
   async def select(self, ctx, category, value):
     user = str(ctx.author).split('#')[0]
+
+    if question_already_selected(self.table, category, value):
+      await ctx.send("That category has already been selected! Pick another one please.")
+      return
+
+    category = category.lower()
     question = get_current_game_question(category, value)
     await ctx.send(f'{user}' + " selected " + f'{category}' + " for " + f'{value}')
-    print(question["answer"])
     self.current_question = question
     new_table = mark_question_selected(self.table, category, int(value))
-    print(new_table)
     self.table = new_table
     await ctx.send("```" + question["question"] + "```")
 
-    await ctx.invoke(self.bot.get_command("answer_question"))
+    await ctx.invoke(self.bot.get_command("kickoff_answer_cycle"))
 
   # start game functionality, never ending loop that has local variables of all of the players + scores, and constantly shows the table of questions
   @commands.command()
@@ -154,7 +172,7 @@ class Trivia(commands.Cog):
     generate_questions_for_game()
     await ctx.send("```Question Table: \n" + f'{tabulate(self.table, headers=self.headers, tablefmt="fancy_grid")}' + "```")
 
-    await ctx.send("```Scoreboard: \n" + f'{show_scoreboard()}' + "```")
+    await ctx.send("```Scoreboard: \n" + f'{show_scoreboard(self.scoreboard)}' + "```")
 
     # randomly select first player to select question
     
