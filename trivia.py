@@ -58,6 +58,9 @@ class Trivia(commands.Cog):
 
   @commands.command()
   async def kickoff_answer_cycle(self, ctx):
+    if not self.game_start:
+      await ctx.send("Game session has not been started yet...run the ```!start_game``` command to commence Trivia Night!")
+      return
     print(ctx.guild.text_channels)
     await ctx.send("After I say 'Go!', 'buzz' a message to the channel (it can be anything) to get to answer this question! \nNote: If you got the question wrong earlier you are NOT allowed to participate.")
     await asyncio.sleep(5)
@@ -72,9 +75,15 @@ class Trivia(commands.Cog):
     answerer = None
     for channel in ctx.guild.text_channels:
       if channel.name == "trivia-night":
+        #TODO
+        # can't use oldest true here because it legit gets the oldest messages in the channel, so it will always be me
+        # get everyone's message (beemu, docquan, bombuh, parz)
+        # grab the created_at time
+        # print out thee created time to the channel, pick the winner. 
         messages = await channel.history(limit=4, oldest_first=True).flatten()
         # if message appears before Go!, consider disqualifying the person that sent that message, increase limit to 10 maybe.
         # condition for the answerer is first valid message AFTER Go!
+        print(messages)
         answerer = messages[0].author.name
         print(answerer)
         break
@@ -85,6 +94,12 @@ class Trivia(commands.Cog):
 
   @commands.command()
   async def answer_question(self, ctx, answer):
+    if not self.game_start:
+      await ctx.send("Game session has not been started yet...run the ```!start_game``` command to commence Trivia Night!")
+      return
+    if self.current_question == None or self.answerer == None:
+      await ctx.send("No question provisioned...maybe select a category first?")
+      return
     user = str(ctx.author).split('#')[0].lower()
     correct_answer = self.current_question["answer"].lower()
     answer = answer.lower()
@@ -146,10 +161,13 @@ class Trivia(commands.Cog):
           self.answerer = None
           self.question = None
         else:
-          await ctx.invoke(self.bot.get_commmand("kickoff_answer_cycle"))
+          await ctx.invoke(self.bot.get_command("kickoff_answer_cycle"))
 
   @commands.command()
   async def select(self, ctx, category, value):
+    if not self.game_start:
+      await ctx.send("Game session has not been started yet...run the ```!start_game``` command to commence Trivia Night!")
+      return
     user = str(ctx.author).split('#')[0]
 
     if question_already_selected(self.table, category, value):
@@ -166,7 +184,7 @@ class Trivia(commands.Cog):
 
     await ctx.invoke(self.bot.get_command("kickoff_answer_cycle"))
 
-  # start game functionality, never ending loop that has local variables of all of the players + scores, and constantly shows the table of questions
+  # start game
   @commands.command()
   async def start_game(self, ctx):
     generate_questions_for_game()
@@ -176,6 +194,8 @@ class Trivia(commands.Cog):
 
     # randomly select first player to select question
     
+    self.game_start = True
+
     self.question_selector = random_player()
     await ctx.send("It is " + f'{self.question_selector}' + "\'s turn to select a category!")
 
