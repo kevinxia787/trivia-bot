@@ -20,7 +20,7 @@ def show_scoreboard(scoreboard):
 
 def random_player():
   players = ["beemu", "docquan", "bombuh", "parz"]
-  random_player = players[random.randint(0, 1)]
+  random_player = players[random.randint(0, 3)]
   return random_player
 
 def mark_question_selected(table, category, value):
@@ -58,6 +58,7 @@ class Trivia(commands.Cog):
     self.answerer = None
     self.scoreboard = [[0, 0, 0, 0]]
     self.attempted_list = [False, False, False, False]
+    self.override = False
 
   @commands.command()
   async def arise(self, ctx):
@@ -88,14 +89,11 @@ class Trivia(commands.Cog):
         # condition for the answerer is first valid message AFTER Go!
         break
 
-
-    #TODO check user in self.attempted_questions
-
     player_messages = []
     for message in messages:
       obj = {}
       name = str(message.author).split("#")[0]
-      if name == "trivia-bot":
+      if name == "trivia-bot" or self.attempted_list[user_key_mapping[name]]:
         continue
       timestamp = message.created_at.timestamp()
       content = message.system_content
@@ -105,6 +103,14 @@ class Trivia(commands.Cog):
       player_messages.append(obj)
 
     player_messages = sorted(player_messages, key = lambda msg: msg['timestamp'])
+    timestamp_grid = []
+    for player_message in player_messages:
+      player_list = []
+      player_list.append(player_message["name"])
+      player_list.append(player_message["timestamp"])
+      timestamp_grid.append(player_list)
+    
+    print()
     print(player_messages)
     answerer = player_messages[0]["name"].lower()
     self.answerer = answerer
@@ -112,10 +118,7 @@ class Trivia(commands.Cog):
     print(player_messages)
 
     #print the messages so that ppl know who won definitevly
-
-
-    #answerer gets to answer the question, create an answer command
-    await ctx.send(f'{answerer}' + " gets to answer the question!")
+    await ctx.send("```Timestamps (lower is better): \n" + f'{tabulate(timestamp_grid, headers=["player", "timestamp"], tablefmt="fancy_grid", floatfmt=".3f")}' +  "\n" f'{answerer}' + " gets to answer the question!```")
     return 
 
   #TODO figure out a way to dm the answer to the person who answers the question, and then write an override command
@@ -132,9 +135,10 @@ class Trivia(commands.Cog):
     user = str(ctx.author).split('#')[0].lower()
     correct_answer = self.current_question["answer"].lower()
     correct_answer_split = self.current_question["answer"].lower().split(" ")
+    self.override = None
     answer = answer.lower()
     if self.answerer != user:
-      await ctx.send("Not your turn...50 pts will be deducted!!")
+      await ctx.send("Not your turn...!!")
     else:
       if answer in correct_answer or answer == correct_answer or answer in correct_answer_split:
         # correct! + value to the scoreboard
@@ -166,7 +170,13 @@ class Trivia(commands.Cog):
         return
       else: 
         # start override process HERE, wait for user input
-
+        await ctx.author.send("The correct answer was: " + correct_answer)
+        await ctx.author.send("You answered: " + answer)
+        await ctx.author.send("If it's good enough, you can override.")
+        await ctx.send("Run override command if you were correct.") # probably should pull incorrect logic into a new command (!continue command)
+        await asyncio.sleep(5)
+        if self.override:
+          return
 
         # incorrect! restart the kickoff question process
         await ctx.send("Womp womp! Incorrect!\nRest of the players (who have not attempted to answer the question) can steal.")
@@ -216,6 +226,7 @@ class Trivia(commands.Cog):
       await ctx.send("That category has already been selected! Pick another one please.")
       return
 
+    self.override = None
     category = category.lower()
     question = get_current_game_question(category, value)
     await ctx.send(f'{user}' + " selected " + f'{category}' + " for " + f'{value}')
@@ -241,6 +252,44 @@ class Trivia(commands.Cog):
 
     self.question_selector = random_player()
     await ctx.send("It is " + f'{self.question_selector}' + "\'s turn to select a category!")
+
+  @commands.command()
+  async def override(self, ctx):
+    user = str(ctx.author).split("#")[0]
+    correct_answer = self.current_question["answer"]
+    if self.answerer != user:
+      await ctx.send("You're not allowed to run this command.")
+      return
+    else:
+      await ctx.send(f'{user}' + " has started an override.")
+      self.override = True
+      await ctx.send("The correct answer was: " + "```" + correct_answer + "```")
+
+      await ctx.send(f'{user}' + " is awarded " + f'{self.current_question["value"]}' + ".")
+
+      self.scoreboard[0][user_key_mapping[user]] += self.current_question["value"]
+        
+      # Show updated scoreboard
+      await ctx.send("```Scoreboard: \n" + f'{show_scoreboard(self.scoreboard)}' + "```")
+
+      # check if there are questions left
+      if check_question_grid_empty(self.table):
+        await ctx.send("We're in the endgame now.")
+        # call endgame function
+
+        return
+
+      # Show updated table
+      await ctx.send("```Question Table: \n" + f'{tabulate(self.table, headers=self.headers, tablefmt="fancy_grid")}' + "```")
+
+      # Set user as the next selector
+      self.question_selector = user
+      await ctx.send("It is " + f'{self.question_selector}' + "\'s turn to select a category!")
+
+      # clear answer, question
+      self.answerer = None
+      self.question = None
+
 
   @commands.command()
   async def endgame(self, ctx):
