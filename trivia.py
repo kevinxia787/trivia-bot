@@ -20,7 +20,7 @@ def show_scoreboard(scoreboard):
 
 def random_player():
   players = ["beemu", "docquan", "bombuh", "parz"]
-  random_player = players[random.randint(0, 3)]
+  random_player = players[random.randint(0, 1)]
   return random_player
 
 def mark_question_selected(table, category, value):
@@ -69,7 +69,7 @@ class Trivia(commands.Cog):
       await ctx.send("Game session has not been started yet...run the ```!start_game``` command to commence Trivia Night!")
       return
     print(ctx.guild.text_channels)
-    await ctx.send("After I say 'Go!', first person to send a message(ONE MESSAGE) to the channel gets to answer the question. \nNote: If you got the question wrong earlier you are NOT allowed to participate.\nDo not begin typing until I say go.")
+    await ctx.send("After I say 'Go!', first person to send a message(ONE MESSAGE) to the channel gets to answer the question. \nNote: If you got the question wrong earlier you are NOT allowed to participate.")
     await asyncio.sleep(5)
     await ctx.send("3")
     await asyncio.sleep(random.randint(1, 5))
@@ -88,6 +88,9 @@ class Trivia(commands.Cog):
         # condition for the answerer is first valid message AFTER Go!
         break
 
+
+    #TODO check user in self.attempted_questions
+
     player_messages = []
     for message in messages:
       obj = {}
@@ -102,15 +105,20 @@ class Trivia(commands.Cog):
       player_messages.append(obj)
 
     player_messages = sorted(player_messages, key = lambda msg: msg['timestamp'])
-
+    print(player_messages)
     answerer = player_messages[0]["name"].lower()
     self.answerer = answerer
     print(messages)
     print(player_messages)
 
+    #print the messages so that ppl know who won definitevly
+
+
     #answerer gets to answer the question, create an answer command
     await ctx.send(f'{answerer}' + " gets to answer the question!")
     return 
+
+  #TODO figure out a way to dm the answer to the person who answers the question, and then write an override command
 
   @commands.command()
   async def answer_question(self, ctx, answer):
@@ -133,15 +141,6 @@ class Trivia(commands.Cog):
         await ctx.send("Correct!\n" + f'{user}' + " is awarded " + f'{self.current_question["value"]}' + ".")
 
         self.scoreboard[0][user_key_mapping[user]] += self.current_question["value"]
-
-        # if user == "beemu":
-        #   self.scoreboard[0][0] += self.current_question["value"]
-        # elif user == "docquan":
-        #   self.scoreboard[0][1] += self.current_question["value"]
-        # elif user == "bombuh":
-        #   self.scoreboard[0][2] += self.current_question["value"]
-        # elif user == "parz":
-        #   self.scoreboard[0][3] += self.current_question["value"]
         
         # Show updated scoreboard
         await ctx.send("```Scoreboard: \n" + f'{show_scoreboard(self.scoreboard)}' + "```")
@@ -166,6 +165,9 @@ class Trivia(commands.Cog):
 
         return
       else: 
+        # start override process HERE, wait for user input
+
+
         # incorrect! restart the kickoff question process
         await ctx.send("Womp womp! Incorrect!\nRest of the players (who have not attempted to answer the question) can steal.")
         # mark user as attempted in the attempted list
@@ -198,7 +200,7 @@ class Trivia(commands.Cog):
           self.question = None
 
           # clear attempted_list
-          self.attempted_list = [False, False, False, False]
+          self.attempted_list = [False, False]
         else:
           await ctx.invoke(self.bot.get_command("kickoff_answer_cycle"))
         return
