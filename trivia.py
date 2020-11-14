@@ -14,13 +14,18 @@ category_key = {"science": 0, "movies & tv": 1, "pop culture": 2, "history": 3, 
 value_key = {"200": 0, "400": 1, "600": 2, "800": 3, "1000": 4}
 user_key_mapping = {"beemu": 0, "docquan": 1, "bombuh": 2, "parz": 3, "0": "beemu", "1": "docquan", "2": "bombuh", "3": "parz"}
 
-def show_scoreboard(scoreboard):
+def show_scoreboard(user_key_mapping):
+  scoreboard = [[]]
+  headers = []
+  for user in user_key_mapping:
+    headers.append(user)
+    scoreboard[0].append(user_key_mapping[user]["score"])
   # show scoreboard
-  return tabulate(scoreboard, headers=["beemu", "docquan", "bombuh", "parz"], tablefmt="fancy_grid")
+  return tabulate(scoreboard, headers=headers, tablefmt="fancy_grid")
 
-def random_player():
-  players = ["beemu", "docquan", "bombuh", "parz"]
-  random_player = players[random.randint(0, 3)]
+def random_player(user_key_mapping):
+  players = [user for user in user_key_mapping]
+  random_player = players[random.randint(0, len(players) - 1)]
   return random_player
 
 def mark_question_selected(table, category, value):
@@ -56,20 +61,40 @@ class Trivia(commands.Cog):
     self.table = [[200, 200, 200, 200, 200, 200],[400, 400, 400, 400, 400, 400],[600, 600, 600, 600, 600, 600],[800, 800, 800, 800, 800, 800],[1000, 1000, 1000, 1000, 1000, 1000]]
     self.current_question = None
     self.answerer = None
-    self.scoreboard = [[0, 0, 0, 0]]
-    self.attempted_list = [False, False, False, False]
+    self.user_key_mapping = {}
     self.override = False
+  
+  @commands.command(description="adds invoker to the list of players prior to game start")
+  async def join(self, ctx):
+    if self.game_start:
+      await ctx.send("Psst...there's a game currently running. Wait for your turn!")
+      return
+    user = str(ctx.author).split("#")[0].lower()
+    if user in self.user_key_mapping:
+      await ctx.send("Hey " + f'{user}' + ", you're already in the game!")
+      return
+    player_data = {"attempted_current_question": False, "score": 0}
+    self.user_key_mapping[user] = player_data
+    print(self.user_key_mapping)
+    await ctx.send(f'{user}' + " joined today's trivia night!")
 
-  @commands.command()
-  async def arise(self, ctx):
-    await ctx.send("I have arisen.") # set tts flag to true --> ctx.send("message", tts=True)
+  @commands.command(description="removes invoker to the list of players prior to game start")
+  async def leave(self, ctx):
+    user = str(ctx.author).split("#")[0].lower()
+    if user not in self.user_key_mapping:
+      await ctx.send(f'{user}' + " you're not in tonight's game. ")
+      return
+    if user in self.user_key_mapping:
+      del self.user_key_mapping[user]
+    print(self.user_key_mapping)
+    await ctx.send(f'{user}' + " left today's trivia night...smells like chicken!")
 
-  @commands.command()
+  @commands.command(description="starts 'buzzer' cycle. do not call this manually as a non-bot user")
   async def kickoff_answer_cycle(self, ctx):
+    # this command starts the buzzing cycle but should not be envoked manually.
     if not self.game_start:
       await ctx.send("Game session has not been started yet...run the ```!start_game``` command to commence Trivia Night!")
       return
-    print(ctx.guild.text_channels)
     await ctx.send("After I say 'Go!', first person to send a message(ONE MESSAGE) to the channel gets to answer the question. \nNote: If you got the question wrong earlier you are NOT allowed to participate.")
     await asyncio.sleep(5)
     await ctx.send("3")
@@ -78,22 +103,21 @@ class Trivia(commands.Cog):
     await asyncio.sleep(random.randint(1,5))
     await ctx.send("1")
     await asyncio.sleep(random.randint(1,5))
-    await ctx.send("Go!") # I should grab this message also
+    await ctx.send("Go!")
     await asyncio.sleep(5)
     answerer = None
     messages = None
     for channel in ctx.guild.text_channels:
       if channel.name == "trivia-night":
-        messages = await channel.history(limit=4).flatten()
-        # if message appears before Go!, consider disqualifying the person that sent that message, increase limit to 10 maybe.
-        # condition for the answerer is first valid message AFTER Go!
+        messages = await channel.history(limit=len(self.user_key_mapping) * 2).flatten()
         break
 
     player_messages = []
     for message in messages:
       obj = {}
-      name = str(message.author).split("#")[0]
-      if name == "trivia-bot" or self.attempted_list[user_key_mapping[name]]:
+      name = str(message.author).split("#")[0].lower()
+      players = [user for user in self.user_key_mapping]
+      if name == "trivia-bot" or self.user_key_mapping[name]["attempted_current_question"] or name not in players:
         continue
       timestamp = message.created_at.timestamp()
       content = message.system_content
@@ -110,20 +134,14 @@ class Trivia(commands.Cog):
       player_list.append(player_message["timestamp"])
       timestamp_grid.append(player_list)
     
-    print()
-    print(player_messages)
     answerer = player_messages[0]["name"].lower()
     self.answerer = answerer
-    print(messages)
-    print(player_messages)
 
-    #print the messages so that ppl know who won definitevly
+    # print the messages so that ppl know who won definitevly
     await ctx.send("```Timestamps (lower is better): \n" + f'{tabulate(timestamp_grid, headers=["player", "timestamp"], tablefmt="fancy_grid", floatfmt=".3f")}' +  "\n" f'{answerer}' + " gets to answer the question!```")
     return 
 
-  #TODO figure out a way to dm the answer to the person who answers the question, and then write an override command
-
-  @commands.command()
+  @commands.command(description="command to answer the current question (for the person who wins the buzzer)")
   async def answer_question(self, ctx, answer):
     if not self.game_start:
       await ctx.send("Game session has not been started yet...run the ```!start_game``` command to commence Trivia Night!")
@@ -144,16 +162,16 @@ class Trivia(commands.Cog):
         # correct! + value to the scoreboard
         await ctx.send("Correct!\n" + f'{user}' + " is awarded " + f'{self.current_question["value"]}' + ".")
 
-        self.scoreboard[0][user_key_mapping[user]] += self.current_question["value"]
+        self.user_key_mapping[user]["score"] += self.current_question["value"]
         
         # Show updated scoreboard
-        await ctx.send("```Scoreboard: \n" + f'{show_scoreboard(self.scoreboard)}' + "```")
+        await ctx.send("```Scoreboard: \n" + f'{show_scoreboard(self.user_key_mapping)}' + "```")
 
         # check if there are questions left
         if check_question_grid_empty(self.table):
           await ctx.send("We're in the endgame now.")
           # call endgame function
-
+          self.bot.get_command("endgame")
           return
 
         # Show updated table
@@ -170,23 +188,17 @@ class Trivia(commands.Cog):
         return
       else: 
         # start override process HERE, wait for user input
-        await ctx.author.send("The correct answer was: " + correct_answer)
-        await ctx.author.send("You answered: " + answer)
+        await ctx.author.send("The correct answer was: ```" + f'{correct_answer}' + "```")
+        await ctx.author.send("You answered: ```" + f'{answer}' + "```")
         await ctx.author.send("If it's good enough, you can override.")
-        await ctx.send("Run override command if you were correct.") # probably should pull incorrect logic into a new command (!continue command)
-        await asyncio.sleep(5)
+        await ctx.send("Run override command if you were correct. If I don't hear from you in 10 seconds I am assuming you got the answer wrong. ")
+        await asyncio.sleep(10)
         if self.override:
           return
 
-        # incorrect! restart the kickoff question process
-        await ctx.send("Womp womp! Incorrect!\nRest of the players (who have not attempted to answer the question) can steal.")
-        # mark user as attempted in the attempted list
+        self.user_key_mapping[user]["attempted_current_question"] = True
 
-        self.attempted_list[user_key_mapping[user]] = True 
-
-        print("attempted list: ", self.attempted_list)
-
-        every_player_attempted = all(player == True for player in self.attempted_list)
+        every_player_attempted = all(self.user_key_mapping[user]["attempted_current_question"] == True for user in self.user_key_mapping)
         if every_player_attempted:
           # do not go back to the kick off answer cycle, end the current cycle
           await ctx.send("Looks like that question stumped everyone! The correct answer is " + f'{self.current_question["answer"]}')
@@ -195,14 +207,13 @@ class Trivia(commands.Cog):
           if check_question_grid_empty(self.table):
             await ctx.send("We're in the endgame now.")
             # call endgame function
-
+            self.bot.get_command("endgame")
             return
-
 
           # Show updated table
           await ctx.send("```Question Table: \n" + f'{tabulate(self.table, headers=self.headers, tablefmt="fancy_grid")}' + "```")
 
-          self.question_selector = random_player()
+          self.question_selector = random_player(self.user_key_mapping)
           await ctx.send("It is " + f'{self.question_selector}' + "\'s turn to select a category!")
 
           # clear answer, question
@@ -210,12 +221,20 @@ class Trivia(commands.Cog):
           self.question = None
 
           # clear attempted_list
-          self.attempted_list = [False, False]
+          for user in self.user_key_mapping:
+            self.user_key_mapping[user]["attempted_current_question"] = False
+
         else:
+          # incorrect! restart the kickoff question process
+          await ctx.send("Womp womp! Incorrect!\nRest of the players (who have not attempted to answer the question) can steal.")
+          # mark user as attempted in the attempted list
+
+          print("attempted list: ", [(player, self.user_key_mapping[player]["attempted_current_question"]) for player in self.user_key_mapping])
+          
           await ctx.invoke(self.bot.get_command("kickoff_answer_cycle"))
         return
       
-  @commands.command()
+  @commands.command(description="selects a question category and value")
   async def select(self, ctx, category, value):
     if not self.game_start:
       await ctx.send("Game session has not been started yet...run the ```!start_game``` command to commence Trivia Night!")
@@ -235,25 +254,28 @@ class Trivia(commands.Cog):
     new_table = mark_question_selected(self.table, category, int(value))
     self.table = new_table
     await ctx.send("```" + question["question"] + "```")
-
     await ctx.invoke(self.bot.get_command("kickoff_answer_cycle"))
 
   # start game
-  @commands.command()
+  @commands.command(description="starts the game")
   async def start_game(self, ctx):
+    if len(self.user_key_mapping) == 0:
+      await ctx.send("We're gonna need some players first...use the ```!join``` command to add yourself to the game.")
+      return
+
     generate_questions_for_game()
     await ctx.send("```Question Table: \n" + f'{tabulate(self.table, headers=self.headers, tablefmt="fancy_grid")}' + "```")
 
-    await ctx.send("```Scoreboard: \n" + f'{show_scoreboard(self.scoreboard)}' + "```")
+    await ctx.send("```Scoreboard: \n" + f'{show_scoreboard(self.user_key_mapping)}' + "```")
 
     # randomly select first player to select question
     
     self.game_start = True
 
-    self.question_selector = random_player()
+    self.question_selector = random_player(self.user_key_mapping)
     await ctx.send("It is " + f'{self.question_selector}' + "\'s turn to select a category!")
 
-  @commands.command()
+  @commands.command(description="overrides the incorrect answer, user gets the points (misspellings, off by one char, weird formatting, etc)")
   async def override(self, ctx):
     user = str(ctx.author).split("#")[0]
     correct_answer = self.current_question["answer"]
@@ -267,16 +289,15 @@ class Trivia(commands.Cog):
 
       await ctx.send(f'{user}' + " is awarded " + f'{self.current_question["value"]}' + ".")
 
-      self.scoreboard[0][user_key_mapping[user]] += self.current_question["value"]
+      self.user_key_mapping[user]["score"] += self.current_question["value"]
         
       # Show updated scoreboard
-      await ctx.send("```Scoreboard: \n" + f'{show_scoreboard(self.scoreboard)}' + "```")
+      await ctx.send("```Scoreboard: \n" + f'{show_scoreboard(self.user_key_mapping)}' + "```")
 
       # check if there are questions left
       if check_question_grid_empty(self.table):
         await ctx.send("We're in the endgame now.")
-        # call endgame function
-
+        self.bot.get_command("endgame")
         return
 
       # Show updated table
@@ -291,15 +312,12 @@ class Trivia(commands.Cog):
       self.question = None
 
 
-  @commands.command()
+  @commands.command(description="ends the game, and declares a winner. only use if you need to stop the game, because this happens naturally when all questions are selected. ")
   async def endgame(self, ctx):
-    await ctx.send("```Scoreboard: \n" + f'{show_scoreboard(self.scoreboard)}' + "```")
+    await ctx.send("```Scoreboard: \n" + f'{show_scoreboard(self.user_key_mapping)}' + "```")
+    winner = max(self.user_key_mapping.keys(), key=(lambda key: self.user_key_mapping[key]["score"]))
 
-    scores = self.scoreboard[0]
-    index = scores.index(max(scores))
-    winner = user_key_mapping[str(index)]
-
-    await ctx.send("Congratulations to " + f'{winner}' "!!")
+    await ctx.send("Congratulations to " + f'{winner}' " for winning today's trivia night!!")
 
     self.game_start = False
     self.question_selector = None
@@ -307,8 +325,7 @@ class Trivia(commands.Cog):
     self.table = [[200, 200, 200, 200, 200, 200],[400, 400, 400, 400, 400, 400],[600, 600, 600, 600, 600, 600],[800, 800, 800, 800, 800, 800],[1000, 1000, 1000, 1000, 1000, 1000]]
     self.current_question = None
     self.answerer = None
-    self.scoreboard = [[0, 0, 0, 0]]
-    self.attempted_list = [False, False, False, False]
+    self.user_key_mapping = {}
 
     return
 
