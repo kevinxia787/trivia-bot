@@ -62,7 +62,7 @@ class Trivia(commands.Cog):
     self.current_question = None
     self.answerer = None
     self.user_key_mapping = {}
-    self.override = False
+    self.override = None
   
   @commands.command(description="adds invoker to the list of players prior to game start")
   async def join(self, ctx):
@@ -112,12 +112,16 @@ class Trivia(commands.Cog):
         messages = await channel.history(limit=len(self.user_key_mapping) * 2).flatten()
         break
 
+    #@TODO loop through messages, get all of them, find index of Go! message, take the slice of it, sort the slice
     player_messages = []
     for message in messages:
       obj = {}
       name = str(message.author).split("#")[0].lower()
       players = [user for user in self.user_key_mapping]
-      if name == "trivia-bot" or self.user_key_mapping[name]["attempted_current_question"] or name not in players:
+      if name not in players:
+        continue
+
+      if name == "trivia-bot" or self.user_key_mapping[name]["attempted_current_question"]:
         continue
       timestamp = message.created_at.timestamp()
       content = message.system_content
@@ -128,12 +132,16 @@ class Trivia(commands.Cog):
 
     player_messages = sorted(player_messages, key = lambda msg: msg['timestamp'])
     timestamp_grid = []
+    if len(player_messages) == 0:
+      return
     for player_message in player_messages:
       player_list = []
       player_list.append(player_message["name"])
       player_list.append(player_message["timestamp"])
       timestamp_grid.append(player_list)
     
+
+    print(player_messages)
     answerer = player_messages[0]["name"].lower()
     self.answerer = answerer
 
@@ -142,7 +150,7 @@ class Trivia(commands.Cog):
     return 
 
   @commands.command(description="command to answer the current question (for the person who wins the buzzer)")
-  async def answer_question(self, ctx, answer):
+  async def answer(self, ctx, answer):
     if not self.game_start:
       await ctx.send("Game session has not been started yet...run the ```!start_game``` command to commence Trivia Night!")
       return
@@ -188,14 +196,13 @@ class Trivia(commands.Cog):
         return
       else: 
         # start override process HERE, wait for user input
-        await ctx.author.send("The correct answer was: ```" + f'{correct_answer}' + "```")
-        await ctx.author.send("You answered: ```" + f'{answer}' + "```")
-        await ctx.author.send("If it's good enough, you can override.")
-        await ctx.send("Run override command if you were correct. If I don't hear from you in 10 seconds I am assuming you got the answer wrong. ")
+        answer_table = [[user, answer, correct_answer]]
+        answer_headers = ["Name", "Your Answer", "Correct Answer"]
+        await ctx.author.send("```If you're answer is close enough, use the override command in the trivia-night channel to give yourself the points: \n" + f'{tabulate(answer_table, headers=answer_headers, tablefmt="fancy_grid")}' + "```")
+        print(self.override)
         await asyncio.sleep(10)
         if self.override:
           return
-
         self.user_key_mapping[user]["attempted_current_question"] = True
 
         every_player_attempted = all(self.user_key_mapping[user]["attempted_current_question"] == True for user in self.user_key_mapping)
@@ -245,10 +252,15 @@ class Trivia(commands.Cog):
       await ctx.send("That category has already been selected! Pick another one please.")
       return
 
+
+    # reset attempted question field
+    for user in self.user_key_mapping:
+      self.user_key_mapping[user]["attempted_current_question"] = False
+
     self.override = None
     category = category.lower()
     question = get_current_game_question(category, value)
-    await ctx.send(f'{user}' + " selected " + f'{category}' + " for " + f'{value}')
+    await ctx.send(f'{self.question_selector}' + " selected " + f'{category}' + " for " + f'{value}')
     self.current_question = question
     print("answer: " + question["answer"])
     new_table = mark_question_selected(self.table, category, int(value))
