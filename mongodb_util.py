@@ -174,21 +174,37 @@ def get_current_game_question(category, value):
 # already done, use it as a reference
 def insert_science_questions(question):
   value = question['value']
+  question_text = question['question']
   if value == 200:
-    science_200.insert_one(question)
-    print("Inserted question id " + str(question['id']) + " into Science 200.")
+    if science_200.find_one({"question": question_text}) != None:
+      print("Duplicate detected, not inserting.")
+    else:
+      science_200.insert_one(question)
+      print("Inserted Question: " + f'{question}' + " into Science 200.")
   elif value == 400:
-    science_400.insert_one(question)
-    print("Inserted question id " + str(question['id']) + " into Science 400.")
+    if science_400.find_one({"question": question_text}) != None:
+      print("Duplicate detected, not inserting.")
+    else:
+      science_400.insert_one(question)
+      print("Inserted Question: " + f'{question}' + " into Science 400.")
   elif value == 600:
-    science_600.insert_one(question)
-    print("Inserted question id " + str(question['id']) + " into Science 600.")
+    if science_600.find_one({"question": question_text}) != None:
+      print("Duplicate detected, not inserting.")
+    else:
+      science_600.insert_one(question)
+      print("Inserted Question: " + f'{question}' + " into Science 600.")
   elif value == 800:
-    science_800.insert_one(question)
-    print("Inserted question id " + str(question['id']) + " into Science 800.")
+    if science_800.find_one({"question": question_text}) != None:
+      print("Duplicate detected, not inserting.")
+    else:
+      science_800.insert_one(question)
+      print("Inserted Question: " + f'{question}' + " into Science 800.")
   elif value == 1000:
-    science_1000.insert_one(question)
-    print("Inserted question id " + str(question['id']) + " into Science 1000.")
+    if science_1000.find_one({"question": question_text}) != None:
+      print("Duplicate detected, not inserting.")
+    else:
+      science_1000.insert_one(question)
+      print("Inserted Question: " + f'{question}' + " into Science 1000.")
   else:
     print("Error occured.")
 
@@ -196,21 +212,37 @@ def insert_science_questions(question):
 
 def insert_movies_tv_questions(question):
   value = question['value']
+  question_text = question['question']
   if value == 200:
-    movies_tv_200.insert_one(question)
-    print("Inserted question id " + str(question['id']) + " into Movies & TV 200.")
+    if movies_tv_200.find_one({"question": question_text}) != None:
+      print("Duplicate detected, not inserting.")
+    else:
+      movies_tv_200.insert_one(question)
+      print("Inserted Question: " + f'{question}' + " into Movies & TV 200.")
   elif value == 400:
-    movies_tv_400.insert_one(question)
-    print("Inserted question id " + str(question['id']) + " into Movies & TV 400.")
+    if movies_tv_400.find_one({"question": question_text}) != None:
+      print("Duplicate detected, not inserting.")
+    else:
+      movies_tv_400.insert_one(question)
+      print("Inserted Question: " + f'{question}' + " into Movies & TV 400.")
   elif value == 600:
-    movies_tv_600.insert_one(question)
-    print("Inserted question id " + str(question['id']) + " into Movies & TV 600.")
+    if movies_tv_600.find_one({"question": question_text}) != None:
+      print("Duplicate detected, not inserting.")
+    else:
+      movies_tv_600.insert_one(question)
+      print("Inserted Question: " + f'{question}' + " into Movies & TV 600.")
   elif value == 800:
-    movies_tv_800.insert_one(question)
-    print("Inserted question id " + str(question['id']) + " into Movies & TV 800.")
+    if movies_tv_800.find_one({"question": question_text}) != None:
+      print("Duplicate detected, not inserting.")
+    else:
+      movies_tv_800.insert_one(question)
+      print("Inserted Question: " + f'{question}' + " into Movies & TV 800.")
   elif value == 1000:
-    movies_tv_1000.insert_one(question)
-    print("Inserted question id " + str(question['id']) + " into Movies & TV 1000.")
+    if movies_tv_1000.find_one({"question": question_text}) != None:
+      print("Duplicate detected, not inserting.")
+    else:
+      movies_tv_1000.insert_one(question)
+      print("Inserted Question: " + f'{question}' + " into Movies & TV 1000.")
   else:
     print("Error occured.")
 
@@ -218,21 +250,37 @@ def insert_movies_tv_questions(question):
 
 def insert_pop_culture_questions(question):
   value = question['value']
+  question_text = question['question']
   if value == 200:
-    pop_culture_200.insert_one(question)
-    print("Inserted question id " + str(question['id']) + " into Pop Culture 200.")
+    if pop_culture_200.find_one({"question": question_text}) != None:
+      print("Duplicate detected, not inserting.")
+    else:
+      pop_culture_200.insert_one(question)
+      print("Inserted Question: " + f'{question}' + " into Pop Culture 200.")
   elif value == 400:
-    pop_culture_400.insert_one(question)
-    print("Inserted question id " + str(question['id']) + " into Pop Culture 400.")
+    if pop_culture_400.find_one({"question": question_text}) != None:
+      print("Duplicate detected, not inserting.")
+    else:
+      pop_culture_400.insert_one(question)
+      print("Inserted Question: " + f'{question}' + " into Pop Culture 400.")
   elif value == 600:
-    pop_culture_600.insert_one(question)
-    print("Inserted question id " + str(question['id']) + " into Pop Culture 600.")
+    if pop_culture_600.find_one({"question": question_text}) != None:
+      print("Duplicate detected, not inserting.")
+    else:
+      pop_culture_600.insert_one(question)
+      print("Inserted Question: " + f'{question}' + " into Pop Culture 600.")
   elif value == 800:
-    pop_culture_800.insert_one(question)
-    print("Inserted question id " + str(question['id']) + " into Pop Culture 800.")
+    if pop_culture_800.find_one({"question": question_text}) != None:
+      print("Duplicate detected, not inserting.")
+    else:
+      pop_culture_800.insert_one(question)
+      print("Inserted Question: " + f'{question}' + " into Pop Culture 800.")
   elif value == 1000:
-    pop_culture_1000.insert_one(question)
-    print("Inserted question id " + str(question['id']) + " into Pop Culture 1000.")
+    if pop_culture_1000.find_one({"question": question_text}) != None:
+      print("Duplicate detected, not inserting.")
+    else:
+      pop_culture_1000.insert_one(question)
+      print("Inserted Question: " + f'{question}' + " into Pop Culture 1000.")
   else:
     print("Error occured.")
 
@@ -240,21 +288,37 @@ def insert_pop_culture_questions(question):
 
 def insert_history_questions(question):
   value = question['value']
+  question_text = question['question']
   if value == 200:
-    history_200.insert_one(question)
-    print("Inserted question id " + str(question['id']) + " into History 200.")
+    if history_200.find_one({"question": question_text}) != None:
+      print("Duplicate detected, not inserting.")
+    else:
+      history_200.insert_one(question)
+      print("Inserted Question: " + f'{question}' + " into History 200.")
   elif value == 400:
-    history_400.insert_one(question)
-    print("Inserted question id " + str(question['id']) + " into History 400.")
+    if history_400.find_one({"question": question_text}) != None:
+      print("Duplicate detected, not inserting.")
+    else:
+      history_400.insert_one(question)
+      print("Inserted Question: " + f'{question}' + " into History 400.")
   elif value == 600:
-    history_600.insert_one(question)
-    print("Inserted question id " + str(question['id']) + " into History 600.")
+    if history_600.find_one({"question": question_text}) != None:
+      print("Duplicate detected, not inserting.")
+    else:
+      history_600.insert_one(question)
+      print("Inserted Question: " + f'{question}' + " into History 600.")
   elif value == 800:
-    history_800.insert_one(question)
-    print("Inserted question id " + str(question['id']) + " into History 800.")
+    if history_800.find_one({"question": question_text}) != None:
+      print("Duplicate detected, not inserting.")
+    else:
+      history_800.insert_one(question)
+      print("Inserted Question: " + f'{question}' + " into History 800.")
   elif value == 1000:
-    history_1000.insert_one(question)
-    print("Inserted question id " + str(question['id']) + " into History 1000.")
+    if history_1000.find_one({"question": question_text}) != None:
+      print("Duplicate detected, not inserting.")
+    else:
+      history_1000.insert_one(question)
+      print("Inserted Question: " + f'{question}' + " into History 1000.")
   else:
     print("Error occured.")
 
@@ -262,21 +326,37 @@ def insert_history_questions(question):
 
 def insert_music_questions(question):
   value = question['value']
+  question_text = question['question']
   if value == 200:
-    music_200.insert_one(question)
-    print("Inserted question id " + str(question['id']) + " into Music 200.")
+    if music_200.find_one({"question": question_text}) != None:
+      print("Duplicate detected, not inserting.")
+    else:
+      music_200.insert_one(question)
+      print("Inserted Question: " + f'{question}' + " into Music 200.")
   elif value == 400:
-    music_400.insert_one(question)
-    print("Inserted question id " + str(question['id']) + " into Music 400.")
+    if music_400.find_one({"question": question_text}) != None:
+      print("Duplicate detected, not inserting.")
+    else:
+      music_400.insert_one(question)
+      print("Inserted Question: " + f'{question}' + " into Music 400.")
   elif value == 600:
-    music_600.insert_one(question)
-    print("Inserted question id " + str(question['id']) + " into Music 600.")
+    if music_600.find_one({"question": question_text}) != None:
+      print("Duplicate detected, not inserting.")
+    else:
+      music_600.insert_one(question)
+      print("Inserted Question: " + f'{question}' + " into Music 600.")
   elif value == 800:
-    music_800.insert_one(question)
-    print("Inserted question id " + str(question['id']) + " into Music 800.")
+    if music_800.find_one({"question": question_text}) != None:
+      print("Duplicate detected, not inserting.")
+    else:
+      music_800.insert_one(question)
+      print("Inserted Question: " + f'{question}' + " into Music 800.")
   elif value == 1000:
-    music_1000.insert_one(question)
-    print("Inserted question id " + str(question['id']) + " into Music 1000.")
+    if music_1000.find_one({"question": question_text}) != None:
+      print("Duplicate detected, not inserting.")
+    else:
+      music_1000.insert_one(question)
+      print("Inserted Question: " + f'{question}' + " into Music 1000.")
   else:
     print("Error occured.")
 
@@ -284,21 +364,37 @@ def insert_music_questions(question):
 
 def insert_food_drink_questions(question):
   value = question['value']
+  question_text = question['question']
   if value == 200:
-    food_drink_200.insert_one(question)
-    print("Inserted question id " + str(question['id']) + " into Food & Drink 200.")
+    if food_drink_200.find_one({"question": question_text}) != None:
+      print("Duplicate detected, not inserting.")
+    else:
+      food_drink_200.insert_one(question)
+      print("Inserted Question: " + f'{question}' + " into Food & Drink 200.")
   elif value == 400:
-    food_drink_400.insert_one(question)
-    print("Inserted question id " + str(question['id']) + " into Food & Drink 400.")
+    if food_drink_400.find_one({"question": question_text}) != None:
+      print("Duplicate detected, not inserting.")
+    else:
+      food_drink_400.insert_one(question)
+      print("Inserted Question: " + f'{question}' + " into Food & Drink 400.")
   elif value == 600:
-    food_drink_600.insert_one(question)
-    print("Inserted question id " + str(question['id']) + " into Food & Drink 600.")
+    if food_drink_600.find_one({"question": question_text}) != None:
+      print("Duplicate detected, not inserting.")
+    else:
+      food_drink_600.insert_one(question)
+      print("Inserted Question: " + f'{question}' + " into Food & Drink 600.")
   elif value == 800:
-    food_drink_800.insert_one(question)
-    print("Inserted question id " + str(question['id']) + " into Food & Drink 800.")
+    if food_drink_800.find_one({"question": question_text}) != None:
+      print("Duplicate detected, not inserting.")
+    else:
+      food_drink_800.insert_one(question)
+      print("Inserted Question: " + f'{question}' + " into Food & Drink 800.")
   elif value == 1000:
-    food_drink_1000.insert_one(question)
-    print("Inserted question id " + str(question['id']) + " into Food & Drink 1000.")
+    if food_drink_1000.find_one({"question": question_text}) != None:
+      print("Duplicate detected, not inserting.")
+    else:
+      food_drink_1000.insert_one(question)
+      print("Inserted Question: " + f'{question}' + " into Food & Drink 1000.")
   else:
     print("Error occured.")
 
