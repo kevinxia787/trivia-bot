@@ -138,8 +138,8 @@ def format_answer(answer):
 def simplify_question_object(question):
   simple_question_object = {}
   simple_question_object["question"] = question["question"]
+  print(question["question"])
   simple_question_object["answer"] = format_answer(question["answer"])
-  print(format_answer(question["answer"]))
   simple_question_object["value"] = question["value"]
   return simple_question_object
 

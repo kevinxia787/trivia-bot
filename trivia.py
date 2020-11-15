@@ -4,11 +4,20 @@ import discord
 import random
 import asyncio
 import time
+import re
+import requests
 
 from discord.ext import commands
 from tabulate import tabulate
 from mongodb_util import get_current_game_question
 from mongodb_util import generate_questions_for_game
+from mongodb_util import random_question_200
+from mongodb_util import random_question_400
+from mongodb_util import random_question_600
+from mongodb_util import random_question_800
+from mongodb_util import random_question_1000
+from bs4 import BeautifulSoup as Soup
+from collections import Counter
 
 category_key = {"science": 0, "movies & tv": 1, "pop culture": 2, "history": 3, "music": 4, "food & drink": 5}
 value_key = {"200": 0, "400": 1, "600": 2, "800": 3, "1000": 4}
@@ -81,7 +90,8 @@ class Trivia(commands.Cog):
     if check_question_grid_empty(self.table):
       await ctx.send("We're in the endgame now.")
       # call endgame function
-      self.bot.get_command("endgame")
+      await ctx.invoke(self.bot.get_command("endgame"))
+      
       return
 
     # Show updated table
@@ -278,20 +288,33 @@ class Trivia(commands.Cog):
       await ctx.send("That category has already been selected! Pick another one please.")
       return
 
-
     # reset attempted question field
     for user in self.user_key_mapping:
       self.user_key_mapping[user]["attempted_current_question"] = False
-
-    self.override = None
+      
     category = category.lower()
+    # check if there are URLs in the question
     question = get_current_game_question(category, value)
+    question_text = question["question"]
+    parser = Soup(question_text, 'html.parser')
+    urls_in_question = [a['href'] for a in parser.find_all('a')]
+    cleaned_question = re.sub(re.compile('<.*?>'), '', question_text)
+    print(cleaned_question)
+    # clean up everything between < > characters
     await ctx.send(f'{self.question_selector}' + " selected " + f'{category}' + " for " + f'{value}')
     self.current_question = question
-    print("answer: " + question["answer"])
     new_table = mark_question_selected(self.table, category, int(value))
     self.table = new_table
-    await ctx.send("```" + question["question"] + "```")
+    
+    await ctx.send("```Question: " + cleaned_question + "```")
+    if len(urls_in_question) != 0:
+      for url in urls_in_question:
+        if requests.get(url).status_code == 404:
+          continue
+        embed_obj = discord.Embed()
+        print(url)
+        embed_obj.set_image(url=url)
+        await ctx.send(embed=embed_obj)
     await ctx.invoke(self.bot.get_command("kickoff_answer_cycle"))
 
   # start game
@@ -317,6 +340,45 @@ class Trivia(commands.Cog):
   async def endgame(self, ctx):
     await ctx.send("```Scoreboard: \n" + f'{show_scoreboard(self.user_key_mapping)}' + "```")
     winner = max(self.user_key_mapping.keys(), key=(lambda key: self.user_key_mapping[key]["score"]))
+
+    winning_score = self.user_key_mapping[winner]["score"]
+    scores = [self.user_key_mapping[key]["score"] for key in self.user_key_mapping]
+
+    print(winning_score)
+    print(scores)
+
+    num_each_score = Counter(scores)
+
+    print(num_each_score)
+
+    if num_each_score[winning_score] > 1:
+      await ctx.send("We have a tie! Commencing the tiebreak question, winner takes all!")
+      random_question_list = []
+      for category in self.headers:
+        random_question_list.append(random_question_200(category))
+        random_question_list.append(random_question_400(category))
+        random_question_list.append(random_question_600(category))
+        random_question_list.append(random_question_800(category))
+        random_question_list.append(random_question_1000(category))
+      random.shuffle(random_question_list)
+      question = random_question_list[0]
+      self.current_question = question
+      question_text = question["question"]
+      parser = Soup(question_text, 'html.parser')
+      urls_in_question = [a['href'] for a in parser.find_all('a')]
+      cleaned_question = re.sub(re.compile('<.*?>'), '', question_text)
+      await ctx.send("```Question: " + cleaned_question + "```")
+      if len(urls_in_question) != 0:
+        for url in urls_in_question:
+          if requests.get(url).status_code == 404:
+            continue
+          embed_obj = discord.Embed()
+          print(url)
+          embed_obj.set_image(url=url)
+          await ctx.send(embed=embed_obj)
+      await ctx.invoke(self.bot.get_command("kickoff_answer_cycle"))
+      return
+
 
     await ctx.send("Congratulations to " + f'{winner}' " for winning today's trivia night!!")
 
