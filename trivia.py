@@ -21,7 +21,6 @@ from collections import Counter
 
 category_key = {"science": 0, "movies & tv": 1, "pop culture": 2, "history": 3, "music": 4, "food & drink": 5}
 value_key = {"200": 0, "400": 1, "600": 2, "800": 3, "1000": 4}
-user_key_mapping = {"beemu": 0, "docquan": 1, "bombuh": 2, "parz": 3, "0": "beemu", "1": "docquan", "2": "bombuh", "3": "parz"}
 
 def show_scoreboard(user_key_mapping):
   scoreboard = [[]]
@@ -222,6 +221,7 @@ class Trivia(commands.Cog):
     answer = answer.lower()
     if self.answerer != user:
       await ctx.send("Not your turn...!!")
+      return
     else:
       if answer == correct_answer or answer in correct_answer_split:
         # correct! + value to the scoreboard
@@ -344,12 +344,7 @@ class Trivia(commands.Cog):
     winning_score = self.user_key_mapping[winner]["score"]
     scores = [self.user_key_mapping[key]["score"] for key in self.user_key_mapping]
 
-    print(winning_score)
-    print(scores)
-
     num_each_score = Counter(scores)
-
-    print(num_each_score)
 
     if num_each_score[winning_score] > 1:
       await ctx.send("We have a tie! Commencing the tiebreak question, winner takes all!")
