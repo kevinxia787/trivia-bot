@@ -218,7 +218,7 @@ def pull_all_questions():
   pull_from_question_json()
 
 
-#pull_all_questions()
+pull_all_questions()
 
  
 

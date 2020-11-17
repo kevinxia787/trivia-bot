@@ -1,11 +1,17 @@
 import pymongo
 import re
 import unidecode
+import redis
 
 from pymongo import MongoClient
 
 client = MongoClient()
+# redis_server = redis.Redis()
 
+# MONGO_USER = str(redis_server.get('MONGO_USER').decode('utf-8'))
+# MONGO_PASSWORD = str(redis_server.get('MONGO_PASSWORD').decode('utf-8'))
+
+# client_url = "mongodb+srv://" + MONGO_USER + ":" + MONGO_PASSWORD + "@question-cluster.lg2yr.mongodb.net/trivia-bot-db?retryWrites=true&w=majority"
 trivia_bot_db = client.trivia_bot_db
 
 current_game = trivia_bot_db.current_game

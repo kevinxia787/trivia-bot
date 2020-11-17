@@ -1,12 +1,16 @@
 import os
 import discord
+import redis
 
 from discord.ext import commands
 from dotenv import load_dotenv
 
 load_dotenv()
-TOKEN = os.getenv('DISCORD_TOKEN')
-GUILD = os.getenv('DISCORD_GUILD')
+DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
+
+# redis_server = redis.Redis() # create redis access
+
+# DISCORD_TOKEN = str(redis_server.get('DISCORD_TOKEN').decode('utf-8'))
 
 startup_ext = ["trivia"]
 
@@ -14,11 +18,7 @@ bot = commands.Bot(command_prefix='!')
 
 @bot.event
 async def on_ready():
-  guild = discord.utils.find(lambda g: g.name == GUILD, bot.guilds)
-  print(
-      f'{bot.user} is connected to: \n'
-      f'{guild.name}(id: {guild.id})'
-  )       
+  print("Trivia Bot Running")  
 
 if __name__ == "__main__":
     for ext in startup_ext:
@@ -29,4 +29,4 @@ if __name__ == "__main__":
             print('Failed to load extension {}\n{}'.format(ext, exc))
 
 
-bot.run(TOKEN)
+bot.run(DISCORD_TOKEN)
