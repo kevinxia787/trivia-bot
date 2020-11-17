@@ -8,12 +8,12 @@ import redis
 from pymongo import MongoClient
 from dotenv import load_dotenv
 
-client = MongoClient()
+# client = MongoClient()
 # redis_server = redis.Redis()
 
 # load_dotenv()
-# MONGO_USER = os.getenv('MONGO_USER')
-# MONGO_PASSWORD = os.getenv('MONGO_PASSWORD')
+MONGO_USER = os.getenv('MONGO_USER')
+MONGO_PASSWORD = os.getenv('MONGO_PASSWORD')
 
 # MONGO_USER = str(redis_server.get('MONGO_USER').decode('utf-8'))
 # MONGO_PASSWORD = str(redis_server.get('MONGO_PASSWORD').decode('utf-8'))
