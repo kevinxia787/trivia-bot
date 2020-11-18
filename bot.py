@@ -5,7 +5,7 @@ import redis
 from discord.ext import commands
 from dotenv import load_dotenv
 
-# load_dotenv()
+load_dotenv() # comment out when deploying
 DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
 
 # redis_server = redis.Redis() # create redis access
