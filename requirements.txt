@@ -11,7 +11,6 @@ idna==2.10
 multidict==4.7.6
 pymongo==3.11.0
 python-dotenv==0.15.0
-redis==3.5.3
 requests==2.24.0
 soupsieve==2.0.1
 tabulate==0.8.7

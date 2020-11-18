@@ -3,20 +3,15 @@ import os
 import pymongo
 import re
 import unidecode
-import redis
 
 from pymongo import MongoClient
 from dotenv import load_dotenv
 
-# client = MongoClient()
-# redis_server = redis.Redis()
+# client = MongoClient() # local dev
 
-# load_dotenv()
+# load_dotenv() # comment out when deploying
 MONGO_USER = os.getenv('MONGO_USER')
 MONGO_PASSWORD = os.getenv('MONGO_PASSWORD')
-
-# MONGO_USER = str(redis_server.get('MONGO_USER').decode('utf-8'))
-# MONGO_PASSWORD = str(redis_server.get('MONGO_PASSWORD').decode('utf-8'))
 
 client_url = "mongodb+srv://" + MONGO_USER + ":" + MONGO_PASSWORD + "@question-cluster.lg2yr.mongodb.net/trivia-bot-db?retryWrites=true&w=majority"
 client = pymongo.MongoClient(client_url)
@@ -60,6 +55,8 @@ food_drink_400 = trivia_bot_db.food_drink_400
 food_drink_600 = trivia_bot_db.food_drink_600
 food_drink_800 = trivia_bot_db.food_drink_800
 food_drink_1000 = trivia_bot_db.food_drink_1000
+
+server_sessions = trivia_bot_db.server_sessions
 
 # random question from 200 by category
 def random_question_200(category):
@@ -153,12 +150,11 @@ def format_answer(answer):
 def simplify_question_object(question):
   simple_question_object = {}
   simple_question_object["question"] = question["question"]
-  print(question["question"])
   simple_question_object["answer"] = format_answer(question["answer"])
   simple_question_object["value"] = question["value"]
   return simple_question_object
 
-def generate_questions_for_game():
+def generate_questions_for_game(): #TODO fix
   categories = ["Science", "Pop Culture", "Movies & TV", "Music", "Food & Drink", "History"]
   questions = []
   for category in categories:
@@ -171,20 +167,28 @@ def generate_questions_for_game():
     category_obj['800'] = simplify_question_object(random_question_800(category))
     category_obj['1000'] = simplify_question_object(random_question_1000(category))
     questions.append(category_obj)
-  
-  # clear current game db
-  current_game.delete_many({})
-
-  for questions_by_category in questions:
-    current_game.insert_one(questions_by_category)
-    print("Inserted category: " + questions_by_category['category'] + " into Current Game DB. ")
 
   return questions
 
-def get_current_game_question(category, value):
-  category_obj = current_game.find_one({"category": category})
+def get_current_game_question(query, category, value): #TODO FIX
+  questions = query["current_game_questions"]
+  category_obj = [q for q in questions if q["category"] == category.lower()][0]
   return category_obj[str(value)]
 
+# insert new session into db
+def insert_new_server_channel_session(session_obj):
+  server_sessions.insert_one(session_obj)
+  print(f'Inserted {session_obj["session_id"]} into Server Session DB')
+
+def update_server_channel_session(session_obj):
+  server_sessions.delete_one({"session_id": session_obj["session_id"]})
+  server_sessions.insert_one(session_obj)
+  print(f'Updated {session_obj["session_id"]} into Server Session DB')
+
+def get_server_channel_session(server_id, channel_id):
+  session_id = str(server_id) + "#" + str(channel_id)
+  query = server_sessions.find_one({"session_id": session_id})
+  return query
 
 # already done, use it as a reference
 def insert_science_questions(question):
@@ -414,40 +418,3 @@ def insert_food_drink_questions(question):
     print("Error occured.")
 
   return
-
-
-
-# print("Science 200: " + str(random_question_200("Science")))
-# print("Movies & TV 200: " + str(random_question_200("Movies & TV")))
-# print("Pop Culture 200: " + str(random_question_200("Pop Culture")))
-# print("History 200: " + str(random_question_200("History")))
-# print("Music 200: " + str(random_question_200("Music")))
-# print("Food & Drink 200: " + str(random_question_200("Food & Drink")))
-
-# print("Science 400: " + str(random_question_400("Science")))
-# print("Movies & TV 400: " + str(random_question_400("Movies & TV")))
-# print("Pop Culture 400: " + str(random_question_400("Pop Culture")))
-# print("History 400: " + str(random_question_400("History")))
-# print("Music 400: " + str(random_question_400("Music")))
-# print("Food & Drink 400: " + str(random_question_400("Food & Drink")))
-
-# print("Science 600: " + str(random_question_600("Science")))
-# print("Movies & TV 600: " + str(random_question_600("Movies & TV")))
-# print("Pop Culture 600: " + str(random_question_600("Pop Culture")))
-# print("History 600: " + str(random_question_600("History")))
-# print("Music 600: " + str(random_question_600("Music")))
-# print("Food & Drink 600: " + str(random_question_600("Food & Drink")))
-
-# print("Science 800: " + str(random_question_800("Science")))
-# print("Movies & TV 800: " + str(random_question_800("Movies & TV")))
-# print("Pop Culture 800: " + str(random_question_800("Pop Culture")))
-# print("History 800: " + str(random_question_800("History")))
-# print("Music 800: " + str(random_question_800("Music")))
-# print("Food & Drink 800: " + str(random_question_800("Food & Drink")))
-
-# print("Science 1000: " + str(random_question_1000("Science")))
-# print("Movies & TV 1000: " + str(random_question_1000("Movies & TV")))
-# print("Pop Culture 1000: " + str(random_question_1000("Pop Culture")))
-# print("History 1000: " + str(random_question_1000("History")))
-# print("Music 1000: " + str(random_question_1000("Music")))
-# print("Food & Drink 1000: " + str(random_question_1000("Food & Drink")))
