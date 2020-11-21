@@ -118,7 +118,6 @@ class Trivia(commands.Cog):
     # Show updated table
     await ctx.send(f'```Question Table: \n{tabulate(query["table"], headers=self.headers, tablefmt="fancy_grid")}```')
 
-    query["question_selector"] = random_player(query["user_key_mapping"])
     await ctx.send(f'It is {query["question_selector"]}\'s turn to select a category!')
 
     # clear answerer, question
@@ -328,6 +327,7 @@ class Trivia(commands.Cog):
             # incorrect! restart the kickoff question process
             await ctx.send("Womp womp! Incorrect!\nRest of the players (who have not attempted to answer the question) can steal.")
             update_server_channel_session(query)
+            await ctx.send("```Question: " + query["selected_question"] + "```")
             await ctx.invoke(self.bot.get_command("kickoff_answer_cycle"))
           return
       
@@ -364,7 +364,7 @@ class Trivia(commands.Cog):
 
     # clean up everything between < > characters
     await ctx.send(f'{query["question_selector"]} selected {category} for {value}.')
-    query["selected_question"] = question
+    query["selected_question"] = cleaned_question
     new_table = mark_question_selected(query["table"], category, int(value))
     query["table"] = new_table
     
