@@ -90,6 +90,13 @@ def create_new_server_channel_session(server_id, channel_id, server_name, channe
   server_channel_session['table'] = [[200, 200, 200, 200, 200, 200],[400, 400, 400, 400, 400, 400],[600, 600, 600, 600, 600, 600],[800, 800, 800, 800, 800, 800],[1000, 1000, 1000, 1000, 1000, 1000]]
   return server_channel_session
 
+def clean_question(question):
+  question_text = question["question"]
+  parser = Soup(question_text, 'html.parser')
+  urls_in_question = [a['href'] for a in parser.find_all('a')]
+  cleaned_question = re.sub(re.compile('<.*?>'), '', question_text)
+  return cleaned_question
+
 class Trivia(commands.Cog):
   def __init__(self, bot):
     self.bot = bot
@@ -188,8 +195,7 @@ class Trivia(commands.Cog):
       await ctx.send("Game session has not been started yet...run the ```!start_game``` command to commence Trivia Night!")
       return
     # add a table here
-    await ctx.send(f'```Who can attempt table: \n{create_attempted_table(query["user_key_mapping"])}```')
-    await ctx.send("After I say 'Go!', first person to send a message(ONE MESSAGE) to the channel gets to answer the question. \nNote: If you got the question wrong earlier you are NOT allowed to participate.")
+    await ctx.send(f'```Who can attempt table: \n{create_attempted_table(query["user_key_mapping"])}\nAfter I say 'Go!', first person to send a message(ONE MESSAGE) to the channel gets to answer the question. \nNote: If you got the question wrong earlier you are NOT allowed to participate.```')
     await asyncio.sleep(5)
     await ctx.send("3")
     await asyncio.sleep(random.randint(1, 5))
@@ -327,7 +333,8 @@ class Trivia(commands.Cog):
             # incorrect! restart the kickoff question process
             await ctx.send("Womp womp! Incorrect!\nRest of the players (who have not attempted to answer the question) can steal.")
             update_server_channel_session(query)
-            await ctx.send("```Question: " + query["selected_question"] + "```")
+            cleaned_question = clean_question(query["selected_question"])
+            await ctx.send("```Question: " + cleaned_question + "```")
             await ctx.invoke(self.bot.get_command("kickoff_answer_cycle"))
           return
       
@@ -357,14 +364,11 @@ class Trivia(commands.Cog):
     # check if there are URLs in the question
     question = get_current_game_question(query, category, value)
     print(question)
-    question_text = question["question"]
-    parser = Soup(question_text, 'html.parser')
-    urls_in_question = [a['href'] for a in parser.find_all('a')]
-    cleaned_question = re.sub(re.compile('<.*?>'), '', question_text)
+    cleaned_question = clean_question(question)
 
     # clean up everything between < > characters
     await ctx.send(f'{query["question_selector"]} selected {category} for {value}.')
-    query["selected_question"] = cleaned_question
+    query["selected_question"] = question
     new_table = mark_question_selected(query["table"], category, int(value))
     query["table"] = new_table
     
