@@ -23,6 +23,7 @@ def clean_question_obj_2(question):
   del question['category_id']
   del question['game_id']
   del question['category']
+  del question['invalid_count']
   return question
 
 # pulling the science category - combo of science(25), science & nature(218), general science (1087), physical science(579), science & tech (950)
@@ -175,8 +176,8 @@ def pull_from_question_json():
   movies_tv_categories = ["MOVIES & TV", "TELEVISION", "DIRECTORS", "THE MOVIES", "MOVIES"]
   music_categories = ["MUSIC", "MUSICAL INSTRUMENTS", "ROCK", "ROCK MUSIC", "CLASSICAL MUSIC", "MUSIC CLASS"]
   history_categories = ["HISTORY", "AMERICAN HISTORY", "EUROPEAN HISTORY", "ASIAN HISTORY", "WORLD HISTORY", "U.S. HISTORY"]
-  pop_culture_categories = ["SPORTS", "POP CULTURE", "HOLIDAYS & OBSERVANCES", "HOLIDAYS", "STAR WARS", "STAR TREK", "HARRY POTTER", "RELIGION"]
-  science_categories = ["SCIENCE", "GENERAL SCIENCE", "SCIENCE & NATURE", "PHYSICAL SCIENCE", "LIFE SCIENCE", "SCIENCE & TECHNOLOGY"]
+  pop_culture_categories = ["SPORTS","POP CULTURE", "HOLIDAYS", "STAR WARS", "STAR TREK", "HARRY POTTER", "BOOKS", "THE INTERNET", "BASKETBALL", "FOOTBALL", "TENNIS", "BASEBALL", "HOCKEY", "BOXING", "ANIMATION", "COMIC BOOKS", "FICTION"]
+  science_categories = ["SCIENCE", "GENERAL SCIENCE", "SCIENCE & NATURE", "PHYSICAL SCIENCE", "LIFE SCIENCE", "SCIENCE & TECHNOLOGY", "EARTH SCIENCE", "MEDICINE", "COMPUTER SCIENCE", "MARINE SCIENCE"]
 
   questions_list = []
   value_list = ["$200", "$400", "$600", "$800", "$1000"]
