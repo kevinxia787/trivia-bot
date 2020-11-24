@@ -95,7 +95,7 @@ def clean_question(question):
   parser = Soup(question_text, 'html.parser')
   urls_in_question = [a['href'] for a in parser.find_all('a')]
   cleaned_question = re.sub(re.compile('<.*?>'), '', question_text)
-  return cleaned_question
+  return (cleaned_question, urls_in_question)
 
 class Trivia(commands.Cog):
   def __init__(self, bot):
@@ -123,9 +123,7 @@ class Trivia(commands.Cog):
       return
 
     # Show updated table
-    await ctx.send(f'```Question Table: \n{tabulate(query["table"], headers=self.headers, tablefmt="fancy_grid")}```')
-
-    await ctx.send(f'It is {query["question_selector"]}\'s turn to select a category!')
+    await ctx.send(f'```Scoreboard: \n{show_scoreboard(query["user_key_mapping"])}\nQuestion Table: \n{tabulate(query["table"], headers=self.headers, tablefmt="fancy_grid")}\nIt is {query["question_selector"]}\'s turn to select a category!```')
 
     # clear answerer, question
     query["answerer"] = None
@@ -195,7 +193,7 @@ class Trivia(commands.Cog):
       await ctx.send("Game session has not been started yet...run the ```!start_game``` command to commence Trivia Night!")
       return
     # add a table here
-    await ctx.send(f'```Who can attempt table: \n{create_attempted_table(query["user_key_mapping"])}\nAfter I say 'Go!', first person to send a message(ONE MESSAGE) to the channel gets to answer the question. \nNote: If you got the question wrong earlier you are NOT allowed to participate.```')
+    await ctx.send(f'```Who can attempt table: \n{create_attempted_table(query["user_key_mapping"])}\nAfter I Say \'Go!\' , first person to send a message(ONE MESSAGE) to the channel gets to answer the question. \nNote: If you got the question wrong earlier you are NOT allowed to participate.```')
     await asyncio.sleep(5)
     await ctx.send("3")
     await asyncio.sleep(random.randint(1, 5))
@@ -289,9 +287,6 @@ class Trivia(commands.Cog):
         await ctx.send(f'Correct!\n{user} is awararded {query["selected_question"]["value"]} points.')
 
         query["user_key_mapping"][user]["score"] += query["selected_question"]["value"]
-        
-        # Show updated scoreboard
-        await ctx.send(f'```Scoreboard: \n{show_scoreboard(query["user_key_mapping"])}```')
 
         update_server_channel_session(query)
         await self.next_question_logic(ctx)
@@ -313,8 +308,6 @@ class Trivia(commands.Cog):
 
           query["user_key_mapping"][user]["score"] += query["selected_question"]["value"]
             
-          # Show updated scoreboard
-          await ctx.send(f'```Scoreboard: \n{show_scoreboard(query["user_key_mapping"])}```')
           update_server_channel_session(query)
           # check if there are questions left
           await self.next_question_logic(ctx)
@@ -334,7 +327,7 @@ class Trivia(commands.Cog):
             await ctx.send("Womp womp! Incorrect!\nRest of the players (who have not attempted to answer the question) can steal.")
             update_server_channel_session(query)
             cleaned_question = clean_question(query["selected_question"])
-            await ctx.send("```Question: " + cleaned_question + "```")
+            await ctx.send("```Question: " + cleaned_question[0] + "```")
             await ctx.invoke(self.bot.get_command("kickoff_answer_cycle"))
           return
       
@@ -374,8 +367,8 @@ class Trivia(commands.Cog):
     
     update_server_channel_session(query)
 
-    await ctx.send("```Question: " + cleaned_question + "```")
-    if len(urls_in_question) != 0:
+    await ctx.send("```Question: " + cleaned_question[0] + "```")
+    if len(cleaned_question[1]) != 0:
       for url in urls_in_question:
         if requests.get(url).status_code == 404:
           continue
@@ -402,9 +395,8 @@ class Trivia(commands.Cog):
       return
 
     query["current_game_questions"] = generate_questions_for_game()
-    await ctx.send(f'```Question Table: \n{tabulate(query["table"], headers=self.headers, tablefmt="fancy_grid")}```')
 
-    await ctx.send(f'```Scoreboard: \n{show_scoreboard(query["user_key_mapping"])}```')
+    await ctx.send(f'```Scoreboard: \n{show_scoreboard(query["user_key_mapping"])}\nQuestion Table: \n{tabulate(query["table"], headers=self.headers, tablefmt="fancy_grid")}```')
 
     # randomly select first player to select question
     
