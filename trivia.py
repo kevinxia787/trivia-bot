@@ -193,7 +193,7 @@ class Trivia(commands.Cog):
       await ctx.send("Game session has not been started yet...run the ```!start_game``` command to commence Trivia Night!")
       return
     # add a table here
-    await ctx.send(f'```Who can attempt table: \n{create_attempted_table(query["user_key_mapping"])}\nAfter I Say \'Go!\' , first person to send a message(ONE MESSAGE) to the channel gets to answer the question. \nNote: If you got the question wrong earlier you are NOT allowed to participate.```')
+    await ctx.send(f'```Who can attempt table: \n{create_attempted_table(query["user_key_mapping"])}\nI will start a countdown from 3. After I Say \'Go!\', first person to send a message(ONE MESSAGE) to the channel gets to answer the question. \nNote: If you got the question wrong earlier you are NOT allowed to participate.```')
     await asyncio.sleep(5)
     await ctx.send("3")
     await asyncio.sleep(random.randint(1, 5))
@@ -260,9 +260,6 @@ class Trivia(commands.Cog):
 
   @commands.command(description="command to answer the current question (for the person who wins the buzzer)")
   async def answer(self, ctx, answer):
-    if answer == None:
-      await ctx.send("You're missing an answer. This is what the answer command should look like: !answer \"answer here\" (No need to make your answer a question)")
-      return
 
     query = get_server_channel_session(ctx.message.guild.id, ctx.message.channel.id)
 
@@ -333,12 +330,16 @@ class Trivia(commands.Cog):
             await ctx.send("```Question: " + cleaned_question[0] + "```")
             await ctx.invoke(self.bot.get_command("kickoff_answer_cycle"))
           return
-      
+
+  @answer.error
+  async def answer_error(self, ctx, error):
+    if isinstance(error, commands.MissingRequiredArgument):
+      await ctx.send("You're missing some arguments in the answer command. Reminder that it should look like this: \n```!answer \"your answer here\" # you do not need to format it in the form of a question```")
+    else:
+      raise error
+
   @commands.command(description="selects a question category and value. Note: if the category isn't one word (Movies & TV, Food & Drink, Pop Culture) you'll need to wrap your category with quotes. E.G. !select \"movies & tv\" 1000")
   async def select(self, ctx, category, value):
-    if category == None or value == None:
-      await ctx.send("You're missing some parameters. This is what the command should look like: !select \"food & drink\"1000, or !select \"science\" 1000")
-      return
 
     query = get_server_channel_session(ctx.message.guild.id, ctx.message.channel.id)
 
@@ -385,6 +386,13 @@ class Trivia(commands.Cog):
         embed_obj.set_image(url=url)
         await ctx.send(embed=embed_obj)
     await ctx.invoke(self.bot.get_command("kickoff_answer_cycle"))
+
+  @select.error
+  async def select_error(self, ctx, error):
+    if isinstance(error, commands.MissingRequiredArgument):
+      await ctx.send("You're missing some arguments in the select command. Reminder that it should look like this: \n```!select \"movies & tv\" 1000\n!select science 1000 # one word categories do not need quotes around them```")
+    else:
+      raise error
 
   # start game
   @commands.command(description="starts the game", pass_context=True)
@@ -466,7 +474,7 @@ class Trivia(commands.Cog):
 
   @commands.command(description="tutorial on how the trivia-bot works")
   async def info(self, ctx):
-    await ctx.send("```Play-Jeopardy How To:\n\nFirst, run the !setup command to create a session dedicated to your server and channel. You only need to do this once. \n\nTo join the game, players need to use the !join the game. Once players have joined, run the start command to start the game. \n\nPlay-Jeopardy will show a table of categories, the score, and randomly select a player to select a question.\n\nThis player can use the !select command to pick a category and a value.\n\nIf the category has a space in it (e.g. food & drink or movies & tv) you'll need to wrap the category in quotes - !select \"movies & tv\" 400. \n\nOnce the question is picked, Play-Jeopardy will initate a countdown. After the bot sends \"Go!\" to the channel, the buzzing window starts. \n\nType any message to the channel (don't prepend with an !) and Play-Jeopardy will pick the message that came right after \"Go!\". Sometimes you'll probably see your message first on your discord client and your friends might see the same for them on their client, so Play-Jeopardy also sends a table of message timestamps so no one can dispute who was first. \n\nThe player who gets to answer uses the !answer command followed by their answer wrapped in quotes (e.g. !answer \"hello world\"). \n\nIf the player gets the answer right off the bat, the game continues as normal - the previous answerer gets to pick the new category and the cycle restarts from there. \n\nIf Play-Jeopardy is unsure if your answer is correct or incorrect, it will DM you the correct answer, and your answer for you to make the best judgement on whether or not you got it right. Play-Jeopardy will wait for your input in the channel, and you can type Y or N to proceed. \n\nY overrides and gives you the points, and continues. N does not override and lets other players steal. \n\nWhen all questions are selected, the game ends, and a winner is declared. \n\nHappy Jeopardy-ing!```")    
+    await ctx.send("```Play-Jeopardy How To:\n\nFirst, run the !setup command to create a session dedicated to your server and channel. You only need to do this once. \n\nTo join the game, players need to use the !join the game. Once players have joined, run the start command to start the game. Have Discord open in a size that makes the tables shown easily viewed. \n\nPlay-Jeopardy will show a table of categories, the score, and randomly select a player to select a question.\n\nThis player can use the !select command to pick a category and a value.\n\nIf the category has a space in it (e.g. food & drink or movies & tv) you'll need to wrap the category in quotes - \n\n!select \"movies & tv\" 400 \n\nOnce the question is picked, Play-Jeopardy will initate a countdown. After the bot sends \"Go!\" to the channel, the buzzing window starts. \n\nType any message to the channel (don't prepend with an !) and Play-Jeopardy will pick the message that came right after \"Go!\". Sometimes you'll probably see your message first on your discord client and your friends might see the same for them on their client, so Play-Jeopardy also sends a table of message timestamps so no one can dispute who was first. \n\nThe player who gets to answer uses the !answer command followed by their answer wrapped in quotes (e.g. !answer \"hello world\"). \n\nIf the player gets the answer right off the bat, the game continues as normal - the previous answerer gets to pick the new category and the cycle restarts from there. \n\nIf Play-Jeopardy is unsure if your answer is correct or incorrect, it will DM you the correct answer, and your answer for you to make the best judgement on whether or not you got it right. Play-Jeopardy will wait for your input in the channel, and you can type Y or N to proceed. \n\nY overrides and gives you the points, and continues. N does not override and lets other players steal. \n\nWhen all questions are selected, the game ends, and a winner is declared. \n\nHappy Jeopardy-ing!```")    
       
   @commands.command(description="set up trivia-bot for your server + channel")
   async def setup(self, ctx):
