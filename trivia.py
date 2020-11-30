@@ -260,6 +260,9 @@ class Trivia(commands.Cog):
 
   @commands.command(description="command to answer the current question (for the person who wins the buzzer)")
   async def answer(self, ctx, answer):
+    if answer == None:
+      await ctx.send("You're missing an answer. This is what the answer command should look like: !answer \"answer here\" (No need to make your answer a question)")
+      return
 
     query = get_server_channel_session(ctx.message.guild.id, ctx.message.channel.id)
 
@@ -333,6 +336,9 @@ class Trivia(commands.Cog):
       
   @commands.command(description="selects a question category and value. Note: if the category isn't one word (Movies & TV, Food & Drink, Pop Culture) you'll need to wrap your category with quotes. E.G. !select \"movies & tv\" 1000")
   async def select(self, ctx, category, value):
+    if category == None or value == None:
+      await ctx.send("You're missing some parameters. This is what the command should look like: !select \"food & drink\"1000, or !select \"science\" 1000")
+      return
 
     query = get_server_channel_session(ctx.message.guild.id, ctx.message.channel.id)
 
